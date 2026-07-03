@@ -110,7 +110,7 @@
   .wrap { max-width: 1280px; margin: 0 auto; padding: 20px clamp(12px, 3vw, 28px) 90px; position: relative; z-index: 1; }
 
   /* ---------- Header ---------- */
-  header.top { display: flex; align-items: flex-end; gap: 18px; flex-wrap: wrap; margin-bottom: 6px; }
+  header.top { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; flex-wrap: wrap; margin-bottom: 6px; }
   .logo { display: flex; align-items: center; gap: 14px; }
   .logo .book {
     width: 58px; height: 58px; border-radius: 14px; flex: none;
@@ -131,14 +131,14 @@
   .shiny-line { font-size: 14px; color: var(--muted); font-weight: 700; }
   .shiny-line b { color: var(--r-legendary); text-shadow: 0 0 12px rgba(255,207,74,.5); }
 
-  /* ---------- Milestone bar ---------- */
-  .progress { flex: 1 1 320px; min-width: 260px; }
-  .progress .label { font-size: 13px; font-weight: 800; color: var(--accent-2); margin-bottom: 6px; letter-spacing: .3px;
+  /* ---------- Overall completion (compact, top-right) ---------- */
+  .progress { flex: 0 0 auto; width: 210px; max-width: 46vw; text-align: right; margin-top: 4px; }
+  .progress .label { font-size: 11px; font-weight: 800; color: var(--accent-2); margin-bottom: 5px; letter-spacing: .2px;
                       text-shadow: 0 0 12px rgba(255,138,61,.35); }
   .bar {
-    height: 28px; background: rgba(12,16,48,.6); border: 1.5px solid rgba(255,138,61,.55);
-    border-radius: 8px; overflow: hidden; position: relative;
-    box-shadow: 0 0 18px rgba(255,138,61,.25), inset 0 0 10px rgba(0,0,0,.4);
+    height: 18px; background: rgba(12,16,48,.6); border: 1px solid rgba(255,138,61,.55);
+    border-radius: 6px; overflow: hidden; position: relative;
+    box-shadow: 0 0 14px rgba(255,138,61,.22), inset 0 0 8px rgba(0,0,0,.4);
     backdrop-filter: blur(6px);
   }
   .bar > i {
@@ -155,7 +155,7 @@
   @keyframes shimmer { from { background-position: 0 0; } to { background-position: 52px 0; } }
   .bar > span {
     position: absolute; inset: 0; display: grid; place-items: center;
-    font-size: 12px; font-weight: 800; color: #fff; text-shadow: 0 1px 3px rgba(0,0,0,.7);
+    font-size: 10.5px; font-weight: 800; color: #fff; text-shadow: 0 1px 3px rgba(0,0,0,.7);
   }
 
   /* ---------- Finish tabs ---------- */
@@ -504,7 +504,7 @@ function renderStats() {
     for (const fin of CONFIG.finishes)
       if (isCollected(d.id, fin)) filled++;
   const pct = totalSlots ? Math.round((filled / totalSlots) * 100) : 0;
-  el("progressLabel").textContent = `Overall Collection — ${pct}% complete`;
+  el("progressLabel").textContent = "Collection Progress";
   el("progressFill").style.width = pct + "%";
   el("progressText").textContent = `${filled} / ${totalSlots}`;
 }
