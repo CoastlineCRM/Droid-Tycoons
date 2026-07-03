@@ -382,6 +382,7 @@
   /* ---------- My Droids ---------- */
   .my-progress { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 0 0 14px; }
   .my-progress .my-lbl { color: var(--muted); font-size: 13px; font-weight: 700; }
+  .my-progress .my-rebirth { color: var(--accent-2); font-size: 13px; font-weight: 800; }
   .my-progress select, .my-add select {
     background: var(--panel); border: 1px solid var(--glass-br); color: var(--text);
     border-radius: 8px; padding: 8px 11px; font-size: 13px; font-family: inherit; backdrop-filter: blur(8px);
@@ -1317,12 +1318,20 @@ const MY_STORAGE = "droidtycoons_mydroids_v1";
 const MY_TIERS = ["Base", "Gold", "Diamond", "Rainbow", "Beskar"];
 const tierRank = (t) => MY_TIERS.indexOf(t);
 let myDroids = [];                            // [{ id, tier }]
-let myProgress = { cycle: "1", rebirth: 1 };
+let myProgress = { cycle: "1" }; // rebirth is derived from the cycle checklist
 let myShellBuilt = false;
 (function loadMy() {
   try { const raw = localStorage.getItem(MY_STORAGE); if (raw) { const o = JSON.parse(raw); myDroids = o.droids || []; if (o.progress) myProgress = o.progress; } } catch (e) {}
 })();
 function saveMy() { try { localStorage.setItem(MY_STORAGE, JSON.stringify({ droids: myDroids, progress: myProgress })); } catch (e) {} }
+
+// Current rebirth = the first one in the cycle that isn't fully complete (droids + credits).
+function currentRebirthLevel(cy) {
+  const data = CYCLES[cy];
+  if (!data || !data.rebirths.length) return 1;
+  for (const r of data.rebirths) if (!rebirthAllDone(cy, r)) return r.level;
+  return data.rebirths[data.rebirths.length - 1].level + 1; // whole cycle complete
+}
 
 // Future requirements for a Droidex id in the current cycle, from a rebirth onward.
 function futureNeedsFor(id, cy, fromLevel) {
@@ -1338,17 +1347,16 @@ function buildMyDroidsShell() {
   const droidOpts = [...DROIDEX_DATA].sort((a, b) => a.name.localeCompare(b.name)).map(d => `<option value="${d.id}">${d.name}</option>`).join("");
   const tierOpts = MY_TIERS.map(t => `<option value="${t}">${t}</option>`).join("");
   const cycleOpts = Object.keys(CYCLES).filter(c => CYCLES[c].rebirths.length).map(c => `<option value="${c}">Cycle ${c}</option>`).join("");
-  const rebirthOpts = Array.from({ length: 23 }, (_, i) => `<option value="${i + 1}">Rebirth ${i + 1}</option>`).join("");
 
   el("page-mydroids").innerHTML = `
     <div class="cycle-head">
       <div class="cycle-title">My <span class="accent">Droids</span></div>
-      <div class="cycle-sub">Track your base inventory; the advisor uses your current cycle position (remaining rebirths in that cycle).</div>
+      <div class="cycle-sub">Track your base inventory; sale advice uses your current rebirth (auto-detected from that cycle's checklist).</div>
     </div>
     <div class="my-progress">
       <span class="my-lbl">I'm currently on</span>
       <select id="myCycle">${cycleOpts}</select>
-      <select id="myRebirth">${rebirthOpts}</select>
+      <span class="my-rebirth" id="myRebirthLabel"></span>
     </div>
     <div class="my-add">
       <select id="myAddDroid">${droidOpts}</select>
@@ -1358,9 +1366,7 @@ function buildMyDroidsShell() {
     <div id="myList"></div>`;
 
   el("myCycle").value = myProgress.cycle;
-  el("myRebirth").value = myProgress.rebirth;
   el("myCycle").addEventListener("change", () => { myProgress.cycle = el("myCycle").value; saveMy(); renderMyDroids(); });
-  el("myRebirth").addEventListener("change", () => { myProgress.rebirth = parseInt(el("myRebirth").value); saveMy(); renderMyDroids(); });
   el("myAddBtn").addEventListener("click", () => { myDroids.push({ id: el("myAddDroid").value, tier: el("myAddTier").value }); saveMy(); renderMyDroids(); });
   el("myList").addEventListener("click", (e) => {
     const rm = e.target.closest("[data-remove]");
@@ -1370,9 +1376,12 @@ function buildMyDroidsShell() {
 }
 
 function renderMyDroids() {
-  const cy = String(myProgress.cycle), R = parseInt(myProgress.rebirth) || 1;
+  const cy = String(myProgress.cycle);
+  const R = currentRebirthLevel(cy);
   const q = (el("search").value || "").trim().toLowerCase();
   const listEl = el("myList");
+  const last = CYCLES[cy].rebirths.length ? CYCLES[cy].rebirths[CYCLES[cy].rebirths.length - 1].level : 0;
+  el("myRebirthLabel").textContent = R > last ? "· Cycle complete 🎉" : `· Rebirth ${R}`;
 
   const groups = {};
   myDroids.forEach((o, idx) => { (groups[o.id] = groups[o.id] || []).push({ tier: o.tier, idx }); });
