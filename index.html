@@ -1097,6 +1097,16 @@ function cycleCreditsKey(cy, lvl) { return `c${cy}|credits|${lvl}`; }
 function tierClass(t) { return "t-" + t.toLowerCase(); }
 function toggleCycleKey(k) { if (cycleCollected.has(k)) cycleCollected.delete(k); else cycleCollected.add(k); saveCycleState(); }
 
+// Cycle droid checkboxes SHARE the Droidex collection (name/tier -> id/finish).
+// Normalize names (case/spaces/hyphens) and alias the few that differ.
+const _norm = (s) => s.toUpperCase().replace(/[^A-Z0-9]/g, "");
+const DROIDEX_BY_NORM = Object.fromEntries(DROIDEX_DATA.map(d => [_norm(d.name), d.id]));
+const CYCLE_ALIAS = { "L0": "lo", "MONOWLKR": "mono-walker", "OPTISTRK": "opti-strike" };
+const TIER_TO_FINISH = { Base: "Default" }; // Gold/Diamond/Rainbow/Beskar map to themselves
+function cycleDroidId(name) { const n = _norm(name); return CYCLE_ALIAS[n] || DROIDEX_BY_NORM[n] || null; }
+function cycleDroidFinish(tier) { return TIER_TO_FINISH[tier] || tier; }
+function cycleDroidGot(d) { const id = cycleDroidId(d.name); return id ? isCollected(id, cycleDroidFinish(d.tier)) : false; }
+
 function buildCycleShell(cy) {
   el(`page-cycle${cy}`).innerHTML = `
     <div class="cycle-head">
@@ -1133,7 +1143,7 @@ function renderCycleList(cy) {
   for (const r of data.rebirths) {
     total += r.droids.length + 1;
     if (cycleCollected.has(cycleCreditsKey(cy, r.level))) done++;
-    for (const d of r.droids) if (cycleCollected.has(cycleKey(cy, r.level, d.name, d.tier))) done++;
+    for (const d of r.droids) if (cycleDroidGot(d)) done++;
   }
   const pct = total ? Math.round((done / total) * 100) : 0;
   el("progressLabel").textContent = `Cycle ${cy} Progress`;
@@ -1150,15 +1160,14 @@ function renderCycleList(cy) {
     const creditsDone = cycleCollected.has(cycleCreditsKey(cy, r.level));
     const creditsVisible = (!q || "credits".includes(q) || r.credits.toLowerCase().includes(q)) && (!needed || !creditsDone);
     const visible = r.droids.filter(d => {
-      const k = cycleKey(cy, r.level, d.name, d.tier);
       const matchQ = !q || d.name.toLowerCase().includes(q) || d.tier.toLowerCase().includes(q);
-      const matchN = !needed || !cycleCollected.has(k);
+      const matchN = !needed || !cycleDroidGot(d);
       return matchQ && matchN;
     });
     if (!visible.length && !creditsVisible) continue;
     anyVisible = true;
 
-    const droidsDone = r.droids.filter(d => cycleCollected.has(cycleKey(cy, r.level, d.name, d.tier))).length;
+    const droidsDone = r.droids.filter(d => cycleDroidGot(d)).length;
     const itemsDone = droidsDone + (creditsDone ? 1 : 0);
     const itemsTotal = r.droids.length + 1;
     const collapsed = cycleCollapsed.has(`${cy}|${r.level}`);
@@ -1178,9 +1187,11 @@ function renderCycleList(cy) {
       <div class="rb-list">
         ${creditsRow}
         ${visible.map(d => {
-          const k = cycleKey(cy, r.level, d.name, d.tier);
-          const got = cycleCollected.has(k);
-          return `<div class="rb-droid${got ? " got" : ""}" data-action="droid" data-key="${k}">
+          const id = cycleDroidId(d.name);
+          const fin = cycleDroidFinish(d.tier);
+          const got = id ? isCollected(id, fin) : cycleCollected.has(cycleKey(cy, r.level, d.name, d.tier));
+          const attrs = id ? `data-dxid="${id}" data-finish="${fin}"` : `data-key="${cycleKey(cy, r.level, d.name, d.tier)}"`;
+          return `<div class="rb-droid${got ? " got" : ""}" data-action="droid" ${attrs}>
             <span class="ck">✓</span>
             <span class="name">${d.name}</span>
             <span class="rb-tier ${tierClass(d.tier)}">${d.tier}</span>
@@ -1201,7 +1212,12 @@ function onCycleListClick(cy, e) {
     toggleCycleKey(cycleCreditsKey(cy, parseInt(t.dataset.level)));
     renderCycleList(cy);
   } else if (action === "droid") {
-    toggleCycleKey(t.dataset.key);
+    if (t.dataset.dxid) {
+      const id = t.dataset.dxid, fin = t.dataset.finish;
+      setCollected(id, fin, !isCollected(id, fin)); // shared with the Droidex
+    } else {
+      toggleCycleKey(t.dataset.key);
+    }
     renderCycleList(cy);
   } else if (action === "collapse") {
     const lk = `${cy}|${t.dataset.level}`;
