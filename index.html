@@ -214,6 +214,22 @@
   .controls .droidex-only, .controls .cycle-only { display: none; }
   .controls.mode-droidex .droidex-only { display: inline-block; }  /* rarity/type/status only on Droidex */
   .controls.mode-cycle .cycle-only { display: inline-block; }      /* All/Needed only on cycle pages */
+
+  /* Multi-select filter (rarities) */
+  .multi { position: relative; }
+  .multi-btn { background: var(--panel); border: 1px solid var(--glass-br); color: var(--text); border-radius: 8px;
+    padding: 7px 10px; font-size: 13px; font-family: inherit; cursor: pointer; backdrop-filter: blur(8px);
+    display: inline-flex; align-items: center; gap: 8px; white-space: nowrap; }
+  .multi-btn .caret { color: var(--muted); font-size: 10px; }
+  .multi-btn.filter-on { border-color: var(--accent); color: #fff; box-shadow: 0 0 12px rgba(255,138,61,.35); }
+  .multi-panel { position: absolute; top: calc(100% + 6px); left: 0; z-index: 40; min-width: 170px;
+    background: var(--space-1); border: 1px solid var(--glass-br); border-radius: 10px; padding: 6px;
+    box-shadow: 0 14px 34px rgba(0,0,0,.5); }
+  .multi-opt { display: flex; align-items: center; gap: 9px; padding: 7px 9px; border-radius: 7px; cursor: pointer; font-size: 13px; font-weight: 700; }
+  .multi-opt:hover { background: rgba(255,255,255,.06); }
+  .multi-opt .box { width: 15px; height: 15px; border: 2px solid #fff; border-radius: 4px; flex: none;
+    display: grid; place-items: center; font-size: 10px; color: transparent; }
+  .multi-opt.on .box { background: var(--accent); border-color: var(--accent); color: #fff; }
   button.btn {
     background: var(--panel); border: 1px solid var(--glass-br); color: var(--text);
     border-radius: 8px; padding: 7px 12px; font-size: 12px; font-weight: 700;
@@ -494,7 +510,10 @@
       <input type="search" id="search" placeholder="Search droids" autocomplete="off">
       <button class="search-clear" id="searchClear" aria-label="Clear search" hidden>×</button>
     </div>
-    <select id="filterRarity" class="droidex-only"><option value="">All rarities</option></select>
+    <div class="multi droidex-only" id="rarityMulti">
+      <button type="button" class="multi-btn" id="rarityBtn">All rarities <span class="caret">▾</span></button>
+      <div class="multi-panel" id="rarityPanel" hidden></div>
+    </div>
     <select id="filterRole" class="droidex-only"><option value="">All types</option></select>
     <select id="filterStatus" class="droidex-only">
       <option value="">All</option>
@@ -747,6 +766,7 @@ function droidImage(d, finish) {
    ============================================================ */
 const el = (id) => document.getElementById(id);
 const byId = Object.fromEntries(DROIDEX_DATA.map(d => [d.id, d]));
+const selectedRarities = new Set(); // empty = all rarities
 
 function renderTabs() {
   const allActive = state.activeFinish === "All" ? "active" : "";
@@ -780,7 +800,7 @@ function renderStats() {
 function currentFilters() {
   return {
     q: el("search").value.trim().toLowerCase(),
-    rarity: el("filterRarity").value,
+    rarities: selectedRarities,
     type: el("filterRole").value,
     status: el("filterStatus").value,
   };
@@ -789,7 +809,6 @@ function currentFilters() {
 function renderGrid() {
   const f = currentFilters();
   // Highlight dropdowns that have a non-default filter applied.
-  el("filterRarity").classList.toggle("filter-on", !!f.rarity);
   el("filterRole").classList.toggle("filter-on", !!f.type);
   el("filterStatus").classList.toggle("filter-on", !!f.status);
   const searchMode = f.q !== "";
@@ -802,7 +821,7 @@ function renderGrid() {
 
   // Match droids by the row-level filters (rarity / type / search text).
   let droids = DROIDEX_DATA.filter(d => {
-    if (f.rarity && d.rarity !== f.rarity) return false;
+    if (f.rarities.size && !f.rarities.has(d.rarity)) return false;
     if (f.type && d.type !== f.type) return false;
     if (f.q) {
       const hay = `${d.name} ${d.type} ${d.income || ""} ${d.perk || ""} ${d.rarity}`.toLowerCase();
@@ -815,11 +834,15 @@ function renderGrid() {
   // Search: one card per (droid × finish), blended and ordered low → high.
   let cards = [];
   if (blended) {
-    droids = droids.slice().sort((a, b) =>
-      (rarityRank[a.rarity] - rarityRank[b.rarity]) || a.name.localeCompare(b.name));
     for (const d of droids)
       for (const fin of CONFIG.finishes)
         if (droidFinishes(d).includes(fin)) cards.push({ d, finish: fin });
+    // Order by rarity, then finish level (Default -> Beskar), then name.
+    const finIdx = (fin) => CONFIG.finishes.indexOf(fin);
+    cards.sort((a, b) =>
+      (rarityRank[a.d.rarity] - rarityRank[b.d.rarity]) ||
+      (finIdx(a.finish) - finIdx(b.finish)) ||
+      a.d.name.localeCompare(b.d.name));
   } else {
     for (const d of droids)
       if (droidFinishes(d).includes(activeFinish)) cards.push({ d, finish: activeFinish });
@@ -953,7 +976,26 @@ function onGlobalSearch() {
   else if (activePage === "mydroids") renderMyDroids();
 }
 el("search").addEventListener("input", onGlobalSearch);
-["filterRarity", "filterRole", "filterStatus"].forEach(id => el(id).addEventListener("input", renderGrid));
+["filterRole", "filterStatus"].forEach(id => el(id).addEventListener("input", renderGrid));
+
+// Rarity multi-select dropdown
+function updateRarityBtn() {
+  const n = selectedRarities.size;
+  el("rarityBtn").classList.toggle("filter-on", n > 0);
+  const label = n === 0 ? "All rarities" : (n === 1 ? [...selectedRarities][0] : `${n} rarities`);
+  el("rarityBtn").innerHTML = `${label} <span class="caret">▾</span>`;
+}
+el("rarityBtn").addEventListener("click", (e) => { e.stopPropagation(); el("rarityPanel").hidden = !el("rarityPanel").hidden; });
+el("rarityPanel").addEventListener("click", (e) => {
+  const opt = e.target.closest("[data-rarity]");
+  if (!opt) return;
+  const r = opt.dataset.rarity;
+  if (selectedRarities.has(r)) selectedRarities.delete(r); else selectedRarities.add(r);
+  opt.classList.toggle("on", selectedRarities.has(r));
+  updateRarityBtn();
+  renderGrid();
+});
+document.addEventListener("click", (e) => { if (!e.target.closest("#rarityMulti")) el("rarityPanel").hidden = true; });
 el("cycleFilter").addEventListener("change", () => { if (activePage.startsWith("cycle")) renderCycleList(activePage.replace("cycle", "")); });
 el("searchClear").onclick = () => { el("search").value = ""; onGlobalSearch(); el("search").focus(); };
 
@@ -962,7 +1004,7 @@ el("overlay").addEventListener("click", (e) => { if (e.target === el("overlay"))
 el("btnSettings").onclick = () => el("settingsOverlay").classList.add("open");
 el("settingsClose").onclick = closeSettings;
 el("settingsOverlay").addEventListener("click", (e) => { if (e.target === el("settingsOverlay")) closeSettings(); });
-document.addEventListener("keydown", (e) => { if (e.key === "Escape") { closeModal(); closeSettings(); } });
+document.addEventListener("keydown", (e) => { if (e.key === "Escape") { closeModal(); closeSettings(); el("rarityPanel").hidden = true; } });
 
 // Export
 el("btnExport").onclick = () => {
@@ -1026,8 +1068,8 @@ function toast(msg) {
    6. INIT
    ============================================================ */
 function populateFilters() {
-  el("filterRarity").insertAdjacentHTML("beforeend",
-    CONFIG.rarities.map(r => `<option value="${r.name}">${r.name}</option>`).join(""));
+  el("rarityPanel").innerHTML = CONFIG.rarities.map(r =>
+    `<div class="multi-opt" data-rarity="${r.name}"><span class="box">✓</span><span style="color:${r.color}">${r.name}</span></div>`).join("");
   const types = [...new Set(DROIDEX_DATA.map(d => d.type))].sort();
   el("filterRole").insertAdjacentHTML("beforeend",
     types.map(t => `<option value="${t}">${t}</option>`).join(""));
