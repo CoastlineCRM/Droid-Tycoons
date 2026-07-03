@@ -114,8 +114,6 @@
   header.top { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; flex-wrap: wrap; margin-bottom: 6px; }
   .logo { display: flex; flex-direction: column; gap: 10px; }
   .logo-row { display: flex; align-items: center; gap: 14px; }
-  .stats-row { display: flex; align-items: baseline; gap: 20px; flex-wrap: wrap; }
-  .count-main { margin-left: 0 !important; }
   .logo .book {
     width: 58px; height: 58px; border-radius: 14px; flex: none;
     background: linear-gradient(135deg, var(--accent), var(--pink) 55%, var(--purple));
@@ -130,9 +128,6 @@
     -webkit-background-clip: text; background-clip: text; color: transparent;
     filter: drop-shadow(0 3px 18px rgba(255,138,61,.35));
   }
-  .count-main { font-size: clamp(22px, 3vw, 32px); font-weight: 800; color: #fff; margin-left: 4px;
-                text-shadow: 0 0 18px rgba(79,227,255,.35); }
-  .count-main small { color: var(--muted); font-weight: 600; }
   .flawless-line { font-size: 14px; color: var(--muted); font-weight: 700; display: inline-flex; align-items: center; gap: 5px; }
   .progress .flawless-line { display: flex; margin-top: 7px; }
   .flawless-line b { color: var(--r-legendary); text-shadow: 0 0 12px rgba(255,207,74,.5); }
@@ -185,9 +180,10 @@
   .tab[data-finish="Diamond"] { --fc: var(--cyan); }
   .tab[data-finish="Rainbow"] { --fc: var(--pink); }
   .tab[data-finish="Beskar"]  { --fc: #cfd8ee; }
-  /* Rainbow tab: moving rainbow border + rainbow label (matches the cards) */
-  .tab[data-finish="Rainbow"] { position: relative; border-color: transparent !important; }
-  .tab[data-finish="Rainbow"]::before {
+  /* Rainbow tab: moving rainbow border + rainbow label — only when selected */
+  .tab[data-finish="Rainbow"] { position: relative; }
+  .tab[data-finish="Rainbow"].active { border-color: transparent !important; }
+  .tab[data-finish="Rainbow"].active::before {
     content: ""; position: absolute; inset: 0; border-radius: inherit; padding: 1.5px;
     background: linear-gradient(115deg, #ff5e5e, #ffcf4a, #62e57a, #4fc3ff, #b58bff, #ff5ec4, #ff5e5e);
     background-size: 250% 250%;
@@ -195,7 +191,7 @@
     -webkit-mask-composite: xor; mask-composite: exclude;
     animation: rainbowShift 3.5s linear infinite; pointer-events: none;
   }
-  .tab[data-finish="Rainbow"] .tab-label {
+  .tab[data-finish="Rainbow"].active .tab-label {
     background: linear-gradient(115deg, #ff5e5e, #ffcf4a, #62e57a, #4fc3ff, #b58bff, #ff5ec4, #ff5e5e);
     background-size: 250% 250%; -webkit-background-clip: text; background-clip: text; color: transparent;
     animation: rainbowShift 3.5s linear infinite; font-weight: 900;
@@ -386,9 +382,6 @@
       <div class="logo-row">
         <div class="book">🛸</div>
         <h1>Droidex</h1>
-      </div>
-      <div class="stats-row">
-        <span class="count-main" id="countMain">0<small>/0</small></span>
       </div>
     </div>
 
@@ -648,10 +641,6 @@ function renderTabs() {
 }
 
 function renderStats() {
-  // Header count reflects the ACTIVE finish (droids that exist in it + collected).
-  const c = countCollected(state.activeFinish);
-  el("countMain").innerHTML = `${c}<small>/${finishTotal(state.activeFinish)}</small>`;
-
   el("flawlessCount").textContent = `${countFlawless()}/${countFlawlessTotal()}`;
 
   // Overall completion counts every collectible card (each droid's own finishes).
