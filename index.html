@@ -207,6 +207,28 @@
   button.btn.primary { background: linear-gradient(135deg, var(--accent), var(--pink)); border-color: transparent; color: #fff; }
   button.btn.primary:hover { box-shadow: 0 0 22px rgba(255,116,200,.5); }
   button.btn.danger:hover { border-color: var(--r-mythic); color: var(--r-mythic); box-shadow: 0 0 16px rgba(255,106,134,.35); }
+  button.btn.gear { font-size: 16px; padding: 7px 12px; line-height: 1; }
+  button.btn.gear:hover { transform: rotate(60deg); color: var(--cyan); }
+  .settings-modal { width: min(400px, 100%); }
+  .settings-actions { display: flex; flex-direction: column; gap: 10px; margin-top: 4px; }
+  .settings-actions .btn { width: 100%; text-align: center; padding: 12px 14px; font-size: 14px; }
+  .settings-note { color: var(--muted); font-size: 12px; margin-top: 16px; line-height: 1.6; }
+
+  /* Search-first primary bar */
+  .search-wrap { position: relative; margin-bottom: 12px; }
+  .search-wrap .search-ico { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); font-size: 18px; opacity: .7; pointer-events: none; }
+  .search-wrap input {
+    width: 100%; background: var(--panel); border: 1.5px solid var(--glass-br); color: var(--text);
+    border-radius: 14px; padding: 14px 44px 14px 46px; font-size: 16px; font-family: inherit; backdrop-filter: blur(8px);
+  }
+  .search-wrap input::placeholder { color: var(--muted); }
+  .search-wrap input:focus { outline: none; border-color: var(--cyan); box-shadow: 0 0 22px rgba(79,227,255,.35); }
+  .search-clear {
+    position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+    background: none; border: none; color: var(--muted); font-size: 22px; cursor: pointer; line-height: 1; padding: 4px 8px;
+  }
+  .search-clear:hover { color: #fff; }
+  .finish-tag { text-align: center; font-size: 10.5px; font-weight: 800; letter-spacing: .5px; text-transform: uppercase; }
 
   /* ---------- Grid ---------- */
   .grid { display: grid; gap: 14px; grid-template-columns: repeat(auto-fill, minmax(158px, 1fr)); }
@@ -250,8 +272,15 @@
   .badge:hover { border-color: var(--accent); box-shadow: 0 0 12px rgba(255,138,61,.5); }
   .card.collected .badge { background: linear-gradient(135deg, var(--accent), var(--pink)); border-color: transparent; color: #fff;
                            box-shadow: 0 0 14px rgba(255,138,61,.55); }
-  .flawless-mark { position: absolute; top: 9px; left: 9px; font-size: 16px; z-index: 3;
-                filter: drop-shadow(0 0 6px gold); animation: twinkle 2.5s ease-in-out infinite; }
+  /* Game-style type badge, top-left of each card */
+  .type-badge { position: absolute; top: 9px; left: 9px; width: 26px; height: 26px; display: grid; place-items: center;
+                font-size: 14px; z-index: 3; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,.35); }
+  .type-badge.t-worker    { background: #3df08a; }
+  .type-badge.t-astromech { background: #b23dff; border-radius: 5px;
+                            clip-path: polygon(25% 4%, 75% 4%, 100% 50%, 75% 96%, 25% 96%, 0 50%); }
+  .type-badge.t-battle    { background: #ff5c5c; }
+  /* Flawless star now sits inline next to the droid name */
+  .name .fmark { font-size: 12px; filter: drop-shadow(0 0 5px gold); animation: twinkle 2.5s ease-in-out infinite; }
 
   .empty { text-align: center; color: var(--muted); padding: 60px 20px; font-size: 15px; }
 
@@ -346,25 +375,28 @@
     </div>
   </header>
 
-  <!-- Finish tabs -->
-  <div class="tabs" id="tabs"></div>
+  <!-- Search (primary) -->
+  <div class="search-wrap">
+    <span class="search-ico">🔍</span>
+    <input type="search" id="search" placeholder="Search a droid — name, type, or rarity…" autocomplete="off">
+    <button class="search-clear" id="searchClear" aria-label="Clear search" hidden>×</button>
+  </div>
 
-  <!-- Controls -->
+  <!-- Filters + settings -->
   <div class="controls">
-    <input type="search" id="search" placeholder="Search name, type, or rarity…" autocomplete="off">
     <select id="filterRarity"><option value="">All rarities</option></select>
     <select id="filterRole"><option value="">All types</option></select>
     <select id="filterStatus">
       <option value="">All</option>
-      <option value="collected">Collected (this finish)</option>
-      <option value="missing">Missing (this finish)</option>
+      <option value="collected">Collected</option>
+      <option value="missing">Missing</option>
     </select>
     <span class="spacer"></span>
-    <button class="btn" id="btnExport" title="Download your collection as a backup file">⬇ Export</button>
-    <button class="btn" id="btnImport" title="Load a previously exported collection">⬆ Import</button>
-    <button class="btn danger" id="btnReset" title="Clear all your marks">Reset</button>
-    <input type="file" id="importFile" accept="application/json,.json" hidden>
+    <button class="btn gear" id="btnSettings" title="Settings" aria-label="Settings">⚙</button>
   </div>
+
+  <!-- Finish tabs (hidden while searching) -->
+  <div class="tabs" id="tabs"></div>
 
   <!-- Grid -->
   <div class="grid" id="grid"></div>
@@ -379,6 +411,22 @@
 <!-- Detail modal -->
 <div class="overlay" id="overlay">
   <div class="modal" id="modal"><!-- filled by JS --></div>
+</div>
+
+<!-- Settings popup -->
+<div class="overlay" id="settingsOverlay">
+  <div class="modal settings-modal">
+    <button class="m-close" id="settingsClose" aria-label="Close">×</button>
+    <h2 style="font-size:22px;margin:0 0 2px">⚙ Settings</h2>
+    <div class="m-section-label">Your collection</div>
+    <div class="settings-actions">
+      <button class="btn primary" id="btnExport" title="Download your collection as a backup file">⬇ Export backup</button>
+      <button class="btn" id="btnImport" title="Load a previously exported collection">⬆ Import backup</button>
+      <button class="btn danger" id="btnReset" title="Clear all your marks">🗑 Reset all</button>
+    </div>
+    <p class="settings-note">Saved only in this browser. Export to back it up or move it to another device.</p>
+    <input type="file" id="importFile" accept="application/json,.json" hidden>
+  </div>
 </div>
 
 <div class="toast" id="toast"></div>
@@ -465,6 +513,14 @@ const DROIDEX_DATA = [
   { id: "b2-rp",           name: "B2-RP",             rarity: "Legendary",  type: "Battle",     income: "1.30k/s" },
   { id: "cyclo-grav",      name: "CYCLO-GRAV",        rarity: "Legendary",  type: "Battle",     income: "1.26k/s" },
   { id: "opti-strike",     name: "OPTI-STRIKE",       rarity: "Legendary",  type: "Battle",     income: "1.50k/s" },
+  // MYTHIC — perks community-sourced (games.gg / allthings.how); pending in-game verification.
+  { id: "ric-1200",        name: "RIC-1200",          rarity: "Mythic",     type: "Worker",     perk: "30% Droid Crafting Speed" },
+  { id: "lep",             name: "LEP",               rarity: "Mythic",     type: "Worker",     perk: "30% Droid Crafting Speed" },
+  { id: "loadlifter",      name: "LOADLIFTER",        rarity: "Mythic",     type: "Worker",     perk: "30% Droid Crafting Speed" },
+  { id: "tri-tek",         name: "TRI-TEK",           rarity: "Mythic",     type: "Astromech",  perk: "+5 Pickaxe Level" },
+  { id: "cyclens",         name: "CYCLENS",           rarity: "Mythic",     type: "Astromech",  perk: "+5 Pickaxe Level" },
+  { id: "kx",              name: "KX",                rarity: "Mythic",     type: "Battle",     perk: "+100 Max Health" },
+  { id: "ig",              name: "IG",                rarity: "Mythic",     type: "Battle",     perk: "+100 Max Health" },
   { id: "bb8",             name: "BB8",               rarity: "Iconic",     type: "Astromech",  income: "5%/s", finishes: ["Default"], eventLocked: true },
   { id: "mister-bones",    name: "MISTER BONES",      rarity: "Iconic",     type: "Battle",     income: "5%/s", finishes: ["Default"], eventLocked: true },
   { id: "ig-11-marshal",   name: "IG-11 MARSHAL",     rarity: "Iconic",     type: "Battle",     income: "5%/s", finishes: ["Default"], eventLocked: true },
@@ -531,7 +587,10 @@ function droidFinishes(d) { return d.finishes || CONFIG.finishes; }
 function finishTotal(finish) { return DROIDEX_DATA.reduce((n, d) => n + (droidFinishes(d).includes(finish) ? 1 : 0), 0); }
 function flawlessCapable(d) { return !d.eventLocked; }
 function countFlawlessTotal() { return DROIDEX_DATA.reduce((n, d) => n + (flawlessCapable(d) ? 1 : 0), 0); }
-function typeIcon(t) { return t === "Worker" ? "🔧" : t === "Astromech" ? "⚙️" : t === "Battle" ? "⚔️" : "🤖"; }
+function typeIcon(t) { return t === "Worker" ? "🔧" : t === "Astromech" ? "🪐" : t === "Battle" ? "⚔️" : "🤖"; }
+function typeClass(t) { return t === "Worker" ? "t-worker" : t === "Astromech" ? "t-astromech" : t === "Battle" ? "t-battle" : ""; }
+// Accent color per finish, used for the blended-search finish tags.
+const FINISH_COLOR = { Default: "var(--muted)", Gold: "#ffcf4a", Diamond: "var(--cyan)", Rainbow: "var(--pink)", Beskar: "#cfd8ee" };
 // Art lives in droids/NAME_FINISH.png (spaces -> underscores). Missing art
 // falls back to the placeholder icon via the global image-error handler.
 function droidImage(d, finish) {
@@ -585,31 +644,55 @@ function currentFilters() {
 
 function renderGrid() {
   const f = currentFilters();
-  const finish = state.activeFinish;
-  const list = DROIDEX_DATA.filter(d => {
-    if (!droidFinishes(d).includes(finish)) return false; // not collectible in this finish
+  const searchMode = f.q !== "";
+  const activeFinish = state.activeFinish;
+
+  // Searching blends every finish together, so hide the finish tabs.
+  el("tabs").style.display = searchMode ? "none" : "";
+  el("searchClear").hidden = !searchMode;
+
+  // Match droids by the row-level filters (rarity / type / search text).
+  let droids = DROIDEX_DATA.filter(d => {
     if (f.rarity && d.rarity !== f.rarity) return false;
     if (f.type && d.type !== f.type) return false;
-    if (f.status === "collected" && !isCollected(d.id, finish)) return false;
-    if (f.status === "missing" && isCollected(d.id, finish)) return false;
     if (f.q) {
-      const hay = `${d.name} ${d.type} ${d.income} ${d.rarity}`.toLowerCase();
+      const hay = `${d.name} ${d.type} ${d.income || ""} ${d.perk || ""} ${d.rarity}`.toLowerCase();
       if (!hay.includes(f.q)) return false;
     }
     return true;
   });
 
-  el("empty").hidden = list.length > 0;
-  el("grid").innerHTML = list.map(d => {
+  // Build cards. Normal: one card per droid in the active finish.
+  // Search: one card per (droid × finish), blended and ordered low → high.
+  let cards = [];
+  if (searchMode) {
+    droids = droids.slice().sort((a, b) =>
+      (rarityRank[a.rarity] - rarityRank[b.rarity]) || a.name.localeCompare(b.name));
+    for (const d of droids)
+      for (const fin of CONFIG.finishes)
+        if (droidFinishes(d).includes(fin)) cards.push({ d, finish: fin });
+  } else {
+    for (const d of droids)
+      if (droidFinishes(d).includes(activeFinish)) cards.push({ d, finish: activeFinish });
+  }
+
+  // Collected/Missing filter applies to each card's own finish.
+  if (f.status === "collected") cards = cards.filter(c => isCollected(c.d.id, c.finish));
+  if (f.status === "missing")   cards = cards.filter(c => !isCollected(c.d.id, c.finish));
+
+  el("empty").hidden = cards.length > 0;
+  el("grid").innerHTML = cards.map(({ d, finish }) => {
     const got = isCollected(d.id, finish);
     const rc = rarityColor[d.rarity] || "var(--muted)";
-    const art = `<img class="droid-img" src="${droidImage(d, finish)}" alt="${d.name}" loading="lazy">`;
+    const flaw = isFlawless(d.id) ? ` <span class="fmark" title="Flawless">✨</span>` : "";
+    const art = `<img class="droid-img" src="${droidImage(d, finish)}" alt="${d.name} ${finish}" loading="lazy">`;
     return `
       <div class="card ${got ? "collected" : "uncollected"}" data-id="${d.id}" style="--rc:${rc}">
-        <div class="badge" data-toggle="${d.id}" title="Mark ${finish} collected">✓</div>
-        ${isFlawless(d.id) ? `<div class="flawless-mark" title="Flawless">✨</div>` : ""}
+        <div class="type-badge ${typeClass(d.type)}" title="${d.type}">${typeIcon(d.type)}</div>
+        <div class="badge" data-toggle="${d.id}" data-finish="${finish}" title="Mark ${finish} collected">✓</div>
         <div class="art">${art}</div>
-        <div class="name">${d.name}</div>
+        <div class="name">${d.name}${flaw}</div>
+        ${searchMode ? `<div class="finish-tag" style="color:${FINISH_COLOR[finish] || "var(--muted)"}">${finish}</div>` : ""}
         <div class="rarity" style="color:${rc}">${d.rarity}</div>
       </div>`;
   }).join("");
@@ -634,7 +717,7 @@ function openModal(id) {
           <span class="chip">${typeIcon(d.type)} ${d.type}</span>
           ${d.eventLocked ? `<span class="chip" style="color:var(--r-iconic)">🔒 Event-locked</span>` : ""}
         </div>
-        ${d.income ? `<div class="perk">${d.income} base income</div>` : ""}
+        ${d.income ? `<div class="perk">${d.income} base income</div>` : (d.perk ? `<div class="perk">${d.perk}</div>` : "")}
       </div>
     </div>
 
@@ -666,6 +749,7 @@ function openModal(id) {
   el("overlay").classList.add("open");
 }
 function closeModal() { el("overlay").classList.remove("open"); }
+function closeSettings() { el("settingsOverlay").classList.remove("open"); }
 
 /* ============================================================
    5. EVENTS
@@ -689,7 +773,7 @@ el("grid").addEventListener("click", (e) => {
   const badge = e.target.closest("[data-toggle]");
   if (badge) {
     e.stopPropagation();
-    toggleCollected(badge.dataset.toggle, state.activeFinish);
+    toggleCollected(badge.dataset.toggle, badge.dataset.finish || state.activeFinish);
     renderAll();
     return;
   }
@@ -710,10 +794,14 @@ el("tabs").addEventListener("click", (e) => {
 ["search", "filterRarity", "filterRole", "filterStatus"].forEach(id => {
   el(id).addEventListener("input", renderGrid);
 });
+el("searchClear").onclick = () => { el("search").value = ""; renderGrid(); el("search").focus(); };
 
-// Overlay: click outside modal or Esc closes
+// Overlays: click outside modal / gear popup, or Esc, closes
 el("overlay").addEventListener("click", (e) => { if (e.target === el("overlay")) closeModal(); });
-document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeModal(); });
+el("btnSettings").onclick = () => el("settingsOverlay").classList.add("open");
+el("settingsClose").onclick = closeSettings;
+el("settingsOverlay").addEventListener("click", (e) => { if (e.target === el("settingsOverlay")) closeSettings(); });
+document.addEventListener("keydown", (e) => { if (e.key === "Escape") { closeModal(); closeSettings(); } });
 
 // Export
 el("btnExport").onclick = () => {
@@ -742,6 +830,7 @@ el("importFile").onchange = (e) => {
       state.flawless = data.flawless || {};
       saveState();
       renderAll();
+      closeSettings();
       toast("Collection imported ⬆");
     } catch (err) {
       toast("⚠ Invalid file");
@@ -757,6 +846,7 @@ el("btnReset").onclick = () => {
   state = defaultState();
   saveState();
   renderAll();
+  closeSettings();
   toast("Collection cleared");
 };
 
