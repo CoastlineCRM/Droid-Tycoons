@@ -330,8 +330,6 @@
   .cycle-title { font-size: clamp(20px, 3vw, 26px); font-weight: 900; letter-spacing: .3px; text-transform: uppercase; }
   .cycle-title .accent { background: linear-gradient(92deg, var(--accent), var(--pink)); -webkit-background-clip: text; background-clip: text; color: transparent; }
   .cycle-sub { color: var(--muted); font-size: 13px; margin-top: 4px; }
-  .cyc-progress { margin: 0 0 16px; }
-  .cyc-progress .label { font-size: 12px; font-weight: 800; color: var(--accent-2); margin-bottom: 6px; letter-spacing: .3px; }
 
   .rb-card { background: var(--panel); border: 1.5px solid var(--glass-br2); border-radius: 12px; margin-bottom: 8px; overflow: hidden; backdrop-filter: blur(9px); transition: opacity .2s; }
   .rb-card.done { opacity: .5; }
@@ -1105,10 +1103,6 @@ function buildCycleShell(cy) {
       <div class="cycle-title">Cycle ${cy} · <span class="accent">Super Rebirth</span></div>
       <div class="cycle-sub">Droids required at each rebirth — tap to mark collected.</div>
     </div>
-    <div class="cyc-progress">
-      <div class="label">Cycle ${cy} Progress</div>
-      <div class="bar"><i id="cycFill${cy}"></i><span id="cycText${cy}"></span></div>
-    </div>
     <div class="controls">
       <button class="btn" id="cycNeeded${cy}">Needed only</button>
       <button class="btn danger" id="cycReset${cy}">Reset</button>
@@ -1142,8 +1136,9 @@ function renderCycleList(cy) {
     for (const d of r.droids) if (cycleCollected.has(cycleKey(cy, r.level, d.name, d.tier))) done++;
   }
   const pct = total ? Math.round((done / total) * 100) : 0;
-  el(`cycFill${cy}`).style.width = pct + "%";
-  el(`cycText${cy}`).textContent = total ? `${done} / ${total}` : "—";
+  el("progressLabel").textContent = `Cycle ${cy} Progress`;
+  el("progressFill").style.width = pct + "%";
+  el("progressText").textContent = total ? `${done} / ${total}` : "—";
 
   if (!data.rebirths.length) {
     listEl.innerHTML = `<div class="empty">Cycle ${cy} data coming soon.</div>`;
@@ -1220,11 +1215,12 @@ function showPage(page) {
   const isDroidex = page === "droidex";
   document.querySelectorAll(".page").forEach(p => { p.hidden = (p.id !== `page-${page}`); });
   document.querySelectorAll(".nav-btn").forEach(b => b.classList.toggle("active", b.dataset.page === page));
-  el("progressHeader").style.display = isDroidex ? "" : "none";
+  const flawLine = el("progressHeader").querySelector(".flawless-line");
+  if (flawLine) flawLine.style.display = isDroidex ? "" : "none";
   el("topControls").classList.toggle("hide-filters", !isDroidex);
   el("searchClear").hidden = !el("search").value;
   if (isDroidex) {
-    renderGrid();
+    renderAll();
   } else if (page.startsWith("cycle")) {
     const cy = page.replace("cycle", "");
     if (!cycleShellBuilt[cy]) buildCycleShell(cy);
