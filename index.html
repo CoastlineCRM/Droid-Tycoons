@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Droidex Tracker — Droid Tycoons</title>
+<meta name="description" content="A community collection tracker for the Droid Tycoons Droidex. Track which droids you've collected across every finish, no account required.">
+<style>
+  /* ============================================================
+     Droidex Tracker — single-file app.
+     No dependencies, no build step, no backend.
+     Collection state lives in the visitor's browser (localStorage)
+     plus optional JSON export/import for backup + moving devices.
+     ============================================================ */
+
+  :root {
+    --bg:        #0a0a0c;
+    --panel:     #141418;
+    --panel-2:   #1c1c22;
+    --line:      #2a2a32;
+    --text:      #f2f2f5;
+    --muted:     #9a9aa6;
+    --accent:    #ff6a1a;   /* Droid Tycoons orange */
+    --accent-2:  #ff8c4a;
+
+    /* Rarity colors (low -> high) */
+    --r-common:    #5dd85d;
+    --r-rare:      #38bdf8;
+    --r-epic:      #c084fc;
+    --r-legendary: #fbbf24;
+    --r-mythic:    #fb5470;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Segoe UI", system-ui, -apple-system, Roboto, Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    min-height: 100vh;
+  }
+  a { color: var(--accent-2); }
+
+  .wrap { max-width: 1280px; margin: 0 auto; padding: 18px clamp(12px, 3vw, 28px) 80px; }
+
+  /* ---------- Header ---------- */
+  header.top { display: flex; align-items: flex-end; gap: 16px; flex-wrap: wrap; margin-bottom: 6px; }
+  .logo { display: flex; align-items: center; gap: 12px; }
+  .logo .book {
+    width: 54px; height: 54px; border-radius: 12px; flex: none;
+    background: linear-gradient(135deg, var(--accent), #b83d00);
+    display: grid; place-items: center; font-size: 30px;
+    box-shadow: 0 6px 20px rgba(255,106,26,.25);
+  }
+  h1 {
+    font-size: clamp(34px, 6vw, 60px); line-height: .9; margin: 0;
+    font-weight: 900; letter-spacing: -1px; font-style: italic;
+    color: var(--accent); text-transform: uppercase;
+  }
+  .count-main { font-size: clamp(20px, 3vw, 30px); font-weight: 800; color: var(--text); margin-left: 4px; }
+  .count-main small { color: var(--muted); font-weight: 600; }
+  .shiny-line { font-size: 14px; color: var(--muted); font-weight: 700; }
+  .shiny-line b { color: var(--r-legendary); }
+
+  /* ---------- Milestone bar ---------- */
+  .milestone { flex: 1 1 320px; min-width: 260px; }
+  .milestone .label { font-size: 13px; font-weight: 800; color: var(--accent); margin-bottom: 6px; letter-spacing: .3px; }
+  .bar {
+    height: 26px; background: var(--panel-2); border: 2px solid var(--accent);
+    border-radius: 6px; overflow: hidden; position: relative;
+  }
+  .bar > i {
+    display: block; height: 100%; width: 0;
+    background: repeating-linear-gradient(90deg, var(--accent) 0 14px, #d8540f 14px 18px);
+    transition: width .35s ease;
+  }
+  .bar > span {
+    position: absolute; inset: 0; display: grid; place-items: center;
+    font-size: 12px; font-weight: 800; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,.6);
+  }
+
+  /* ---------- Finish tabs ---------- */
+  .tabs { display: flex; gap: 8px; flex-wrap: wrap; margin: 18px 0 14px; }
+  .tab {
+    padding: 8px 18px; border-radius: 8px; border: 2px solid var(--line);
+    background: var(--panel); color: var(--muted); font-weight: 800; letter-spacing: .5px;
+    text-transform: uppercase; font-size: 14px; cursor: pointer; transition: .15s;
+  }
+  .tab:hover { color: var(--text); border-color: #3b3b46; }
+  .tab.active { color: #fff; border-color: var(--accent); background: rgba(255,106,26,.14); }
+  .tab .t-count { font-size: 11px; color: var(--muted); font-weight: 700; margin-left: 6px; }
+  .tab.active .t-count { color: var(--accent-2); }
+
+  /* ---------- Controls ---------- */
+  .controls { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 18px; }
+  .controls input[type=search], .controls select {
+    background: var(--panel); border: 1px solid var(--line); color: var(--text);
+    border-radius: 8px; padding: 9px 12px; font-size: 14px; font-family: inherit;
+  }
+  .controls input[type=search] { flex: 1 1 220px; min-width: 180px; }
+  .controls input[type=search]:focus, .controls select:focus { outline: 2px solid var(--accent); border-color: var(--accent); }
+  .spacer { flex: 1 1 auto; }
+  button.btn {
+    background: var(--panel); border: 1px solid var(--line); color: var(--text);
+    border-radius: 8px; padding: 9px 14px; font-size: 13px; font-weight: 700;
+    cursor: pointer; font-family: inherit; transition: .15s;
+  }
+  button.btn:hover { border-color: var(--accent); color: #fff; }
+  button.btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  button.btn.primary:hover { background: var(--accent-2); }
+  button.btn.danger:hover { border-color: var(--r-mythic); color: var(--r-mythic); }
+
+  /* ---------- Grid ---------- */
+  .grid {
+    display: grid; gap: 12px;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  }
+  .card {
+    background: var(--panel); border: 2px solid var(--line); border-radius: 12px;
+    padding: 10px; cursor: pointer; position: relative; transition: .15s;
+    display: flex; flex-direction: column; gap: 8px;
+  }
+  .card:hover { transform: translateY(-2px); border-color: #3b3b46; }
+  .card.collected { border-color: var(--accent); box-shadow: 0 0 0 1px rgba(255,106,26,.25) inset; }
+  .card.uncollected .art, .card.uncollected .name { filter: grayscale(1) brightness(.6); opacity: .8; }
+
+  .art {
+    aspect-ratio: 1/1; border-radius: 8px; background: var(--panel-2);
+    display: grid; place-items: center; overflow: hidden; position: relative;
+  }
+  .art img { width: 100%; height: 100%; object-fit: contain; }
+  .art .ph { font-size: 40px; opacity: .5; }
+
+  .name { font-weight: 800; font-size: 14px; text-align: center; line-height: 1.1;
+          white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .rarity { text-align: center; font-size: 12px; font-weight: 800; letter-spacing: .4px; }
+
+  /* collected badge (per active finish) */
+  .badge {
+    position: absolute; top: 8px; right: 8px; width: 24px; height: 24px; border-radius: 50%;
+    border: 2px solid var(--line); background: var(--panel-2); display: grid; place-items: center;
+    font-size: 14px; color: transparent; transition: .12s; z-index: 2;
+  }
+  .badge:hover { border-color: var(--accent); }
+  .card.collected .badge { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .shiny-mark { position: absolute; top: 8px; left: 8px; font-size: 15px; filter: drop-shadow(0 0 4px gold); z-index: 2; }
+
+  .empty { text-align: center; color: var(--muted); padding: 60px 20px; font-size: 15px; }
+
+  /* ---------- Modal ---------- */
+  .overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,.72); backdrop-filter: blur(3px);
+    display: none; place-items: center; z-index: 50; padding: 16px;
+  }
+  .overlay.open { display: grid; }
+  .modal {
+    background: var(--panel); border: 2px solid var(--line); border-radius: 16px;
+    width: min(560px, 100%); max-height: 90vh; overflow: auto; padding: 22px;
+  }
+  .modal .m-head { display: flex; gap: 16px; align-items: flex-start; }
+  .modal .m-art { width: 130px; height: 130px; flex: none; border-radius: 12px; background: var(--panel-2);
+                  display: grid; place-items: center; overflow: hidden; }
+  .modal .m-art img { width: 100%; height: 100%; object-fit: contain; }
+  .modal h2 { margin: 0 0 4px; font-size: 26px; font-weight: 900; }
+  .meta-row { display: flex; gap: 8px; flex-wrap: wrap; margin: 8px 0; }
+  .chip { font-size: 12px; font-weight: 800; padding: 4px 10px; border-radius: 999px; background: var(--panel-2); border: 1px solid var(--line); }
+  .perk { margin: 10px 0; color: var(--accent-2); font-weight: 700; font-size: 15px; }
+  .perk::before { content: "★ "; }
+  .m-section-label { font-size: 12px; text-transform: uppercase; letter-spacing: .6px; color: var(--muted); font-weight: 800; margin: 16px 0 8px; }
+  .finish-toggles { display: flex; gap: 8px; flex-wrap: wrap; }
+  .finish-toggles button {
+    padding: 8px 14px; border-radius: 8px; border: 2px solid var(--line); background: var(--panel-2);
+    color: var(--muted); font-weight: 800; cursor: pointer; font-size: 13px; letter-spacing: .4px; text-transform: uppercase;
+  }
+  .finish-toggles button.on { border-color: var(--accent); background: rgba(255,106,26,.16); color: #fff; }
+  .shiny-toggle { display: flex; align-items: center; gap: 10px; margin-top: 16px; }
+  .shiny-toggle button {
+    padding: 8px 14px; border-radius: 8px; border: 2px solid var(--line); background: var(--panel-2);
+    color: var(--muted); font-weight: 800; cursor: pointer;
+  }
+  .shiny-toggle button.on { border-color: var(--r-legendary); color: var(--r-legendary); background: rgba(251,191,36,.12); }
+  .m-close { position: sticky; top: 0; float: right; background: none; border: none; color: var(--muted);
+             font-size: 26px; cursor: pointer; line-height: 1; }
+  .m-close:hover { color: #fff; }
+
+  footer { text-align: center; color: var(--muted); font-size: 12px; margin-top: 40px; line-height: 1.8; }
+  .toast {
+    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%) translateY(20px);
+    background: var(--accent); color: #fff; font-weight: 800; padding: 10px 20px; border-radius: 10px;
+    opacity: 0; pointer-events: none; transition: .25s; z-index: 60;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <div class="logo">
+      <div class="book">📖</div>
+      <div>
+        <h1>Droidex</h1>
+        <div><span class="count-main" id="countMain">0<small>/0</small></span></div>
+        <div class="shiny-line">✨ Shiny <b id="shinyCount">0/0</b> <span id="shinyMult"></span></div>
+      </div>
+    </div>
+
+    <div class="milestone">
+      <div class="label" id="milestoneLabel">—</div>
+      <div class="bar"><i id="milestoneFill"></i><span id="milestoneText"></span></div>
+    </div>
+  </header>
+
+  <!-- Finish tabs -->
+  <div class="tabs" id="tabs"></div>
+
+  <!-- Controls -->
+  <div class="controls">
+    <input type="search" id="search" placeholder="Search name, role, or perk…" autocomplete="off">
+    <select id="filterRarity"><option value="">All rarities</option></select>
+    <select id="filterRole"><option value="">All roles</option></select>
+    <select id="filterStatus">
+      <option value="">All</option>
+      <option value="collected">Collected (this finish)</option>
+      <option value="missing">Missing (this finish)</option>
+    </select>
+    <span class="spacer"></span>
+    <button class="btn" id="btnExport" title="Download your collection as a backup file">⬇ Export</button>
+    <button class="btn" id="btnImport" title="Load a previously exported collection">⬆ Import</button>
+    <button class="btn danger" id="btnReset" title="Clear all your marks">Reset</button>
+    <input type="file" id="importFile" accept="application/json,.json" hidden>
+  </div>
+
+  <!-- Grid -->
+  <div class="grid" id="grid"></div>
+  <div class="empty" id="empty" hidden>No droids match your filters.</div>
+
+  <footer>
+    Droidex Tracker · a fan-made companion for <b>Droid Tycoons</b>.<br>
+    Your collection is saved only in this browser. Use <b>Export</b> to back it up or move it to another device.
+  </footer>
+</div>
+
+<!-- Detail modal -->
+<div class="overlay" id="overlay">
+  <div class="modal" id="modal"><!-- filled by JS --></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ============================================================
+   1. CONFIG — edit these to match the game.
+   ============================================================ */
+const CONFIG = {
+  storageKey: "droidtycoons_droidex_v1",
+
+  // The five collectible finishes (order = tab order).
+  finishes: ["Default", "Gold", "Diamond", "Rainbow", "Beskar"],
+
+  // Rarity tiers, lowest -> highest, with their display color.
+  rarities: [
+    { name: "Common",    color: "var(--r-common)" },
+    { name: "Rare",      color: "var(--r-rare)" },
+    { name: "Epic",      color: "var(--r-epic)" },
+    { name: "Legendary", color: "var(--r-legendary)" },
+    { name: "Mythic",    color: "var(--r-mythic)" },
+  ],
+
+  // Multiplier granted per shiny collected (screenshot showed 5 -> x0.05).
+  shinyMultiplierEach: 0.01,
+
+  // Collection milestones (based on the ACTIVE finish's collected count).
+  // Edit counts/rewards to match the real in-game rewards.
+  milestones: [
+    { count: 25,  reward: "25% Credit Multi" },
+    { count: 50,  reward: "50% Credit Multi" },
+    { count: 100, reward: "100% Credit Multi" },
+    { count: 200, reward: "Golden Crate" },
+    { count: 316, reward: "Full Droidex!" },
+  ],
+};
+
+/* ============================================================
+   2. CATALOG — the master Droidex.
+   These ~10 are SAMPLES to get you started (PIT uses the real
+   values from the game). Add the rest by copying an entry.
+   Fields: id (unique), name, rarity, role, perk, image (URL or
+   empty for a placeholder icon).
+   ============================================================ */
+const DROIDEX_DATA = [
+  { id: "pit",      name: "PIT",      rarity: "Common",    role: "Worker",   perk: "10% Droid Crafting Speed", image: "" },
+  { id: "sprocket", name: "Sprocket", rarity: "Common",    role: "Worker",   perk: "5% Salvage Yield",          image: "" },
+  { id: "rusty",    name: "Rusty",    rarity: "Common",    role: "Gatherer", perk: "5% Scrap Income",           image: "" },
+  { id: "bolt",     name: "Bolt",     rarity: "Rare",      role: "Gatherer", perk: "8% Ore Drop Rate",          image: "" },
+  { id: "vandal",   name: "Vandal",   rarity: "Rare",      role: "Combat",   perk: "12% Attack Speed",          image: "" },
+  { id: "medix",    name: "Medix",    rarity: "Rare",      role: "Support",  perk: "10% Repair Rate",           image: "" },
+  { id: "cipher",   name: "Cipher",   rarity: "Epic",      role: "Support",  perk: "15% Research Speed",        image: "" },
+  { id: "havoc",    name: "Havoc",    rarity: "Epic",      role: "Combat",   perk: "20% Critical Damage",       image: "" },
+  { id: "aurum",    name: "Aurum",    rarity: "Legendary", role: "Worker",   perk: "25% Credit Income",         image: "" },
+  { id: "omega",    name: "Omega",    rarity: "Legendary", role: "Combat",   perk: "30% All Stats",             image: "" },
+  { id: "seraph",   name: "Seraph",   rarity: "Mythic",    role: "Support",  perk: "50% Global Multiplier",     image: "" },
+  { id: "titan",    name: "Titan",    rarity: "Mythic",    role: "Combat",   perk: "2x Boss Damage",            image: "" },
+];
+
+/* ============================================================
+   3. STATE — loaded from localStorage.
+   Shape: { version, activeFinish, collected: { id: {finish:bool} }, shiny: { id:bool } }
+   ============================================================ */
+const rarityColor = Object.fromEntries(CONFIG.rarities.map(r => [r.name, r.color]));
+const rarityRank  = Object.fromEntries(CONFIG.rarities.map((r, i) => [r.name, i]));
+
+let state = loadState();
+
+function defaultState() {
+  return { version: 1, activeFinish: CONFIG.finishes[0], collected: {}, shiny: {} };
+}
+function loadState() {
+  try {
+    const raw = localStorage.getItem(CONFIG.storageKey);
+    if (!raw) return defaultState();
+    const parsed = JSON.parse(raw);
+    return Object.assign(defaultState(), parsed);
+  } catch (e) {
+    console.warn("Could not load saved collection:", e);
+    return defaultState();
+  }
+}
+function saveState() {
+  try {
+    localStorage.setItem(CONFIG.storageKey, JSON.stringify(state));
+  } catch (e) {
+    toast("⚠ Could not save (storage blocked)");
+  }
+}
+
+/* ---- collection helpers ---- */
+function isCollected(id, finish) {
+  return !!(state.collected[id] && state.collected[id][finish]);
+}
+function setCollected(id, finish, val) {
+  if (!state.collected[id]) state.collected[id] = {};
+  state.collected[id][finish] = val;
+  if (!val) delete state.collected[id][finish];
+  if (state.collected[id] && Object.keys(state.collected[id]).length === 0) delete state.collected[id];
+  saveState();
+}
+function toggleCollected(id, finish) {
+  setCollected(id, finish, !isCollected(id, finish));
+}
+function isShiny(id) { return !!state.shiny[id]; }
+function toggleShiny(id) {
+  if (state.shiny[id]) delete state.shiny[id]; else state.shiny[id] = true;
+  saveState();
+}
+function countCollected(finish) {
+  return DROIDEX_DATA.reduce((n, d) => n + (isCollected(d.id, finish) ? 1 : 0), 0);
+}
+function countShiny() { return DROIDEX_DATA.reduce((n, d) => n + (isShiny(d.id) ? 1 : 0), 0); }
+
+/* ============================================================
+   4. RENDER
+   ============================================================ */
+const el = (id) => document.getElementById(id);
+const byId = Object.fromEntries(DROIDEX_DATA.map(d => [d.id, d]));
+
+function renderTabs() {
+  el("tabs").innerHTML = CONFIG.finishes.map(f => {
+    const active = f === state.activeFinish ? "active" : "";
+    const c = countCollected(f);
+    return `<button class="tab ${active}" data-finish="${f}">${f}
+      <span class="t-count">${c}/${DROIDEX_DATA.length}</span></button>`;
+  }).join("");
+}
+
+function renderStats() {
+  const total = DROIDEX_DATA.length;
+  const c = countCollected(state.activeFinish);
+  el("countMain").innerHTML = `${c}<small>/${total}</small>`;
+
+  const s = countShiny();
+  el("shinyCount").textContent = `${s}/${total}`;
+  const mult = (s * CONFIG.shinyMultiplierEach);
+  el("shinyMult").textContent = mult > 0 ? `(x${mult.toFixed(2)})` : "";
+
+  // milestone: next unmet threshold for active finish
+  const next = CONFIG.milestones.find(m => c < m.count);
+  if (next) {
+    const prev = [...CONFIG.milestones].reverse().find(m => m.count <= c);
+    const base = prev ? prev.count : 0;
+    const pct = Math.max(0, Math.min(100, ((c - base) / (next.count - base)) * 100));
+    el("milestoneLabel").textContent = `Collect ${next.count} for ${next.reward}`;
+    el("milestoneFill").style.width = pct + "%";
+    el("milestoneText").textContent = `${c} / ${next.count}`;
+  } else {
+    el("milestoneLabel").textContent = "All milestones complete! 🎉";
+    el("milestoneFill").style.width = "100%";
+    el("milestoneText").textContent = `${c} / ${total}`;
+  }
+}
+
+function currentFilters() {
+  return {
+    q: el("search").value.trim().toLowerCase(),
+    rarity: el("filterRarity").value,
+    role: el("filterRole").value,
+    status: el("filterStatus").value,
+  };
+}
+
+function renderGrid() {
+  const f = currentFilters();
+  const finish = state.activeFinish;
+  const list = DROIDEX_DATA.filter(d => {
+    if (f.rarity && d.rarity !== f.rarity) return false;
+    if (f.role && d.role !== f.role) return false;
+    if (f.status === "collected" && !isCollected(d.id, finish)) return false;
+    if (f.status === "missing" && isCollected(d.id, finish)) return false;
+    if (f.q) {
+      const hay = `${d.name} ${d.role} ${d.perk} ${d.rarity}`.toLowerCase();
+      if (!hay.includes(f.q)) return false;
+    }
+    return true;
+  });
+
+  el("empty").hidden = list.length > 0;
+  el("grid").innerHTML = list.map(d => {
+    const got = isCollected(d.id, finish);
+    const art = d.image
+      ? `<img src="${d.image}" alt="${d.name}" loading="lazy">`
+      : `<span class="ph">🤖</span>`;
+    return `
+      <div class="card ${got ? "collected" : "uncollected"}" data-id="${d.id}">
+        <div class="badge" data-toggle="${d.id}" title="Mark ${finish} collected">✓</div>
+        ${isShiny(d.id) ? `<div class="shiny-mark" title="Shiny">✨</div>` : ""}
+        <div class="art">${art}</div>
+        <div class="name">${d.name}</div>
+        <div class="rarity" style="color:${rarityColor[d.rarity] || "var(--muted)"}">${d.rarity}</div>
+      </div>`;
+  }).join("");
+}
+
+function renderAll() { renderTabs(); renderStats(); renderGrid(); }
+
+/* ---- detail modal ---- */
+function openModal(id) {
+  const d = byId[id];
+  if (!d) return;
+  const art = d.image ? `<img src="${d.image}" alt="${d.name}">` : `<span class="ph" style="font-size:64px">🤖</span>`;
+  el("modal").innerHTML = `
+    <button class="m-close" data-close aria-label="Close">×</button>
+    <div class="m-head">
+      <div class="m-art">${art}</div>
+      <div>
+        <h2>${d.name}</h2>
+        <div class="meta-row">
+          <span class="chip" style="color:${rarityColor[d.rarity]}">${d.rarity}</span>
+          <span class="chip">🔧 ${d.role}</span>
+        </div>
+        <div class="perk">${d.perk}</div>
+      </div>
+    </div>
+
+    <div class="m-section-label">Finishes collected</div>
+    <div class="finish-toggles" id="finishToggles">
+      ${CONFIG.finishes.map(fin => `
+        <button data-finish="${fin}" class="${isCollected(d.id, fin) ? "on" : ""}">${fin}</button>`).join("")}
+    </div>
+
+    <div class="shiny-toggle">
+      <button id="shinyBtn" class="${isShiny(d.id) ? "on" : ""}">✨ Shiny</button>
+      <span style="color:var(--muted);font-size:13px">Mark if you have the shiny variant.</span>
+    </div>
+  `;
+
+  // wire up modal buttons
+  el("finishToggles").querySelectorAll("button").forEach(b => {
+    b.onclick = () => {
+      toggleCollected(d.id, b.dataset.finish);
+      b.classList.toggle("on");
+      renderAll();
+    };
+  });
+  el("shinyBtn").onclick = (e) => { toggleShiny(d.id); e.currentTarget.classList.toggle("on"); renderStats(); renderGrid(); };
+  el("modal").querySelector("[data-close]").onclick = closeModal;
+
+  el("overlay").classList.add("open");
+}
+function closeModal() { el("overlay").classList.remove("open"); }
+
+/* ============================================================
+   5. EVENTS
+   ============================================================ */
+// Grid clicks: badge toggles this finish; card body opens modal.
+el("grid").addEventListener("click", (e) => {
+  const badge = e.target.closest("[data-toggle]");
+  if (badge) {
+    e.stopPropagation();
+    toggleCollected(badge.dataset.toggle, state.activeFinish);
+    renderAll();
+    return;
+  }
+  const card = e.target.closest(".card");
+  if (card) openModal(card.dataset.id);
+});
+
+// Finish tabs
+el("tabs").addEventListener("click", (e) => {
+  const tab = e.target.closest(".tab");
+  if (!tab) return;
+  state.activeFinish = tab.dataset.finish;
+  saveState();
+  renderAll();
+});
+
+// Filters
+["search", "filterRarity", "filterRole", "filterStatus"].forEach(id => {
+  el(id).addEventListener("input", renderGrid);
+});
+
+// Overlay: click outside modal or Esc closes
+el("overlay").addEventListener("click", (e) => { if (e.target === el("overlay")) closeModal(); });
+document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeModal(); });
+
+// Export
+el("btnExport").onclick = () => {
+  const payload = { app: "droidtycoons-droidex", version: 1, exportedFinish: state.activeFinish,
+                    collected: state.collected, shiny: state.shiny };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = "droidex-collection.json";
+  document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(url);
+  toast("Collection exported ⬇");
+};
+
+// Import
+el("btnImport").onclick = () => el("importFile").click();
+el("importFile").onchange = (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const data = JSON.parse(reader.result);
+      if (!data.collected) throw new Error("Not a Droidex export");
+      state.collected = data.collected || {};
+      state.shiny = data.shiny || {};
+      saveState();
+      renderAll();
+      toast("Collection imported ⬆");
+    } catch (err) {
+      toast("⚠ Invalid file");
+    }
+  };
+  reader.readAsText(file);
+  e.target.value = "";
+};
+
+// Reset
+el("btnReset").onclick = () => {
+  if (!confirm("Clear ALL your collection marks? This cannot be undone (export first to keep a backup).")) return;
+  state = defaultState();
+  saveState();
+  renderAll();
+  toast("Collection cleared");
+};
+
+let toastTimer;
+function toast(msg) {
+  const t = el("toast");
+  t.textContent = msg; t.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove("show"), 1800);
+}
+
+/* ============================================================
+   6. INIT
+   ============================================================ */
+function populateFilters() {
+  el("filterRarity").insertAdjacentHTML("beforeend",
+    CONFIG.rarities.map(r => `<option value="${r.name}">${r.name}</option>`).join(""));
+  const roles = [...new Set(DROIDEX_DATA.map(d => d.role))].sort();
+  el("filterRole").insertAdjacentHTML("beforeend",
+    roles.map(r => `<option value="${r}">${r}</option>`).join(""));
+}
+
+populateFilters();
+renderAll();
+</script>
+</body>
+</html>
