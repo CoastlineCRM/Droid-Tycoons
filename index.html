@@ -532,6 +532,12 @@ function finishTotal(finish) { return DROIDEX_DATA.reduce((n, d) => n + (droidFi
 function flawlessCapable(d) { return !d.eventLocked; }
 function countFlawlessTotal() { return DROIDEX_DATA.reduce((n, d) => n + (flawlessCapable(d) ? 1 : 0), 0); }
 function typeIcon(t) { return t === "Worker" ? "🔧" : t === "Astromech" ? "⚙️" : t === "Battle" ? "⚔️" : "🤖"; }
+// Art lives in droids/NAME_FINISH.png (spaces -> underscores). Missing art
+// falls back to the placeholder icon via the global image-error handler.
+function droidImage(d, finish) {
+  const f = finish || CONFIG.finishes[0];
+  return `droids/${d.name.replace(/ /g, "_")}_${f.toUpperCase()}.png`;
+}
 
 /* ============================================================
    4. RENDER
@@ -597,9 +603,7 @@ function renderGrid() {
   el("grid").innerHTML = list.map(d => {
     const got = isCollected(d.id, finish);
     const rc = rarityColor[d.rarity] || "var(--muted)";
-    const art = d.image
-      ? `<img src="${d.image}" alt="${d.name}" loading="lazy">`
-      : `<span class="ph">🤖</span>`;
+    const art = `<img class="droid-img" src="${droidImage(d, finish)}" alt="${d.name}" loading="lazy">`;
     return `
       <div class="card ${got ? "collected" : "uncollected"}" data-id="${d.id}" style="--rc:${rc}">
         <div class="badge" data-toggle="${d.id}" title="Mark ${finish} collected">✓</div>
@@ -617,7 +621,8 @@ function renderAll() { renderTabs(); renderStats(); renderGrid(); }
 function openModal(id) {
   const d = byId[id];
   if (!d) return;
-  const art = d.image ? `<img src="${d.image}" alt="${d.name}">` : `<span class="ph" style="font-size:64px">🤖</span>`;
+  const mf = droidFinishes(d).includes(state.activeFinish) ? state.activeFinish : droidFinishes(d)[0];
+  const art = `<img class="droid-img" src="${droidImage(d, mf)}" alt="${d.name}">`;
   el("modal").innerHTML = `
     <button class="m-close" data-close aria-label="Close">×</button>
     <div class="m-head">
@@ -665,6 +670,20 @@ function closeModal() { el("overlay").classList.remove("open"); }
 /* ============================================================
    5. EVENTS
    ============================================================ */
+// Swap any broken droid image for the placeholder icon (some droids lack art).
+document.addEventListener("error", (e) => {
+  const img = e.target;
+  if (img && img.classList && img.classList.contains("droid-img")) {
+    const parent = img.parentNode;
+    img.remove();
+    if (parent && !parent.querySelector(".ph")) {
+      const ph = document.createElement("span");
+      ph.className = "ph"; ph.textContent = "🤖";
+      parent.appendChild(ph);
+    }
+  }
+}, true);
+
 // Grid clicks: badge toggles this finish; card body opens modal.
 el("grid").addEventListener("click", (e) => {
   const badge = e.target.closest("[data-toggle]");
