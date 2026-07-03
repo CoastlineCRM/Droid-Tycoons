@@ -211,9 +211,9 @@
   .controls select option { background: var(--space-1); color: var(--text); }
   .controls select:focus { outline: none; border-color: var(--cyan); box-shadow: 0 0 16px rgba(79,227,255,.35); }
   .controls select.filter-on { border-color: var(--accent); color: #fff; box-shadow: 0 0 12px rgba(255,138,61,.35); }
-  .controls.hide-filters .droidex-only { display: none; }  /* rarity/type/status only on Droidex */
-  .controls .cycle-only { display: none; }                 /* All/Needed only on cycle pages */
-  .controls.hide-filters .cycle-only { display: inline-block; }
+  .controls .droidex-only, .controls .cycle-only { display: none; }
+  .controls.mode-droidex .droidex-only { display: inline-block; }  /* rarity/type/status only on Droidex */
+  .controls.mode-cycle .cycle-only { display: inline-block; }      /* All/Needed only on cycle pages */
   button.btn {
     background: var(--panel); border: 1px solid var(--glass-br); color: var(--text);
     border-radius: 8px; padding: 7px 12px; font-size: 12px; font-weight: 700;
@@ -363,6 +363,31 @@
   .t-rainbow { background: linear-gradient(90deg,#ff5e5e,#ffcf4a,#62e57a,#4fc3ff,#b58bff,#ff5ec4); background-size: 200%;
                -webkit-background-clip: text; background-clip: text; color: transparent; animation: rainbowShift 3s linear infinite; font-weight: 900; }
 
+  /* ---------- My Droids ---------- */
+  .my-progress { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 0 0 14px; }
+  .my-progress .my-lbl { color: var(--muted); font-size: 13px; font-weight: 700; }
+  .my-progress select, .my-add select {
+    background: var(--panel); border: 1px solid var(--glass-br); color: var(--text);
+    border-radius: 8px; padding: 8px 11px; font-size: 13px; font-family: inherit; backdrop-filter: blur(8px);
+  }
+  .my-progress select option, .my-add select option { background: var(--space-1); color: var(--text); }
+  .my-add { display: flex; gap: 8px; flex-wrap: wrap; margin: 0 0 18px; }
+  .my-add #myAddDroid { flex: 1 1 200px; min-width: 160px; }
+  .my-row {
+    display: flex; align-items: center; gap: 12px; padding: 9px 14px; margin-bottom: 7px;
+    background: var(--panel); border: 1.5px solid var(--glass-br2); border-radius: 10px; backdrop-filter: blur(9px);
+  }
+  .my-row.sell { border-color: rgba(98,229,122,.5); box-shadow: 0 0 14px rgba(98,229,122,.12); }
+  .my-row.keep { border-color: rgba(255,90,90,.45); }
+  .my-status { font-weight: 800; font-size: 12.5px; min-width: 58px; white-space: nowrap; }
+  .my-row.sell .my-status { color: #62e57a; }
+  .my-row.keep .my-status { color: #ff6a6a; }
+  .my-name { font-weight: 700; font-size: 14px; min-width: 84px; }
+  .my-tier { font-size: 11px; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; min-width: 52px; }
+  .my-reason { flex: 1; color: var(--muted); font-size: 12.5px; text-align: right; }
+  .my-remove { background: none; border: none; color: var(--muted); font-size: 20px; cursor: pointer; line-height: 1; padding: 0 4px; }
+  .my-remove:hover { color: var(--r-mythic); }
+
   /* ---------- Modal ---------- */
   .overlay {
     position: fixed; inset: 0; background: rgba(6,8,26,.72); backdrop-filter: blur(5px);
@@ -459,6 +484,7 @@
     <button class="nav-btn" data-page="cycle1">Cycle 1</button>
     <button class="nav-btn" data-page="cycle2">Cycle 2</button>
     <button class="nav-btn" data-page="cycle3">Cycle 3</button>
+    <button class="nav-btn" data-page="mydroids">My Droids</button>
   </nav>
 
   <!-- Global controls — search + settings persist across all pages -->
@@ -496,6 +522,7 @@
   <div id="page-cycle1" class="page" hidden></div>
   <div id="page-cycle2" class="page" hidden></div>
   <div id="page-cycle3" class="page" hidden></div>
+  <div id="page-mydroids" class="page" hidden></div>
 
   <footer>
     Droidex Tracker · a fan-made companion for <b>Droid Tycoons</b>.<br>
@@ -923,6 +950,7 @@ function onGlobalSearch() {
   el("searchClear").hidden = !el("search").value;
   if (activePage === "droidex") renderGrid();
   else if (activePage.startsWith("cycle")) renderCycleList(activePage.replace("cycle", ""));
+  else if (activePage === "mydroids") renderMyDroids();
 }
 el("search").addEventListener("input", onGlobalSearch);
 ["filterRarity", "filterRole", "filterStatus"].forEach(id => el(id).addEventListener("input", renderGrid));
@@ -1236,21 +1264,142 @@ function onCycleListClick(cy, e) {
   }
 }
 
+/* ============================================================
+   8. MY DROIDS — base inventory + "safe to sell" advisor.
+   A droid is safe to sell when no remaining rebirth in the
+   current cycle needs it (higher tiers satisfy lower reqs, and
+   you can always upgrade one you own). Extra copies of a needed
+   droid are sellable — keep the highest, sell the rest.
+   ============================================================ */
+const MY_STORAGE = "droidtycoons_mydroids_v1";
+const MY_TIERS = ["Base", "Gold", "Diamond", "Rainbow", "Beskar"];
+const tierRank = (t) => MY_TIERS.indexOf(t);
+let myDroids = [];                            // [{ id, tier }]
+let myProgress = { cycle: "1", rebirth: 1 };
+let myShellBuilt = false;
+(function loadMy() {
+  try { const raw = localStorage.getItem(MY_STORAGE); if (raw) { const o = JSON.parse(raw); myDroids = o.droids || []; if (o.progress) myProgress = o.progress; } } catch (e) {}
+})();
+function saveMy() { try { localStorage.setItem(MY_STORAGE, JSON.stringify({ droids: myDroids, progress: myProgress })); } catch (e) {} }
+
+// Future requirements for a Droidex id in the current cycle, from a rebirth onward.
+function futureNeedsFor(id, cy, fromLevel) {
+  const data = CYCLES[cy]; const out = [];
+  if (data) for (const r of data.rebirths) {
+    if (r.level < fromLevel) continue;
+    for (const d of r.droids) if (cycleDroidId(d.name) === id) out.push({ level: r.level, tier: d.tier });
+  }
+  return out;
+}
+
+function buildMyDroidsShell() {
+  const droidOpts = [...DROIDEX_DATA].sort((a, b) => a.name.localeCompare(b.name)).map(d => `<option value="${d.id}">${d.name}</option>`).join("");
+  const tierOpts = MY_TIERS.map(t => `<option value="${t}">${t}</option>`).join("");
+  const cycleOpts = Object.keys(CYCLES).filter(c => CYCLES[c].rebirths.length).map(c => `<option value="${c}">Cycle ${c}</option>`).join("");
+  const rebirthOpts = Array.from({ length: 23 }, (_, i) => `<option value="${i + 1}">Rebirth ${i + 1}</option>`).join("");
+
+  el("page-mydroids").innerHTML = `
+    <div class="cycle-head">
+      <div class="cycle-title">My <span class="accent">Droids</span></div>
+      <div class="cycle-sub">Track your base inventory; the advisor uses your current cycle position (remaining rebirths in that cycle).</div>
+    </div>
+    <div class="my-progress">
+      <span class="my-lbl">I'm currently on</span>
+      <select id="myCycle">${cycleOpts}</select>
+      <select id="myRebirth">${rebirthOpts}</select>
+    </div>
+    <div class="my-add">
+      <select id="myAddDroid">${droidOpts}</select>
+      <select id="myAddTier">${tierOpts}</select>
+      <button class="btn primary" id="myAddBtn">+ Add droid</button>
+    </div>
+    <div id="myList"></div>`;
+
+  el("myCycle").value = myProgress.cycle;
+  el("myRebirth").value = myProgress.rebirth;
+  el("myCycle").addEventListener("change", () => { myProgress.cycle = el("myCycle").value; saveMy(); renderMyDroids(); });
+  el("myRebirth").addEventListener("change", () => { myProgress.rebirth = parseInt(el("myRebirth").value); saveMy(); renderMyDroids(); });
+  el("myAddBtn").addEventListener("click", () => { myDroids.push({ id: el("myAddDroid").value, tier: el("myAddTier").value }); saveMy(); renderMyDroids(); });
+  el("myList").addEventListener("click", (e) => {
+    const rm = e.target.closest("[data-remove]");
+    if (rm) { myDroids.splice(parseInt(rm.dataset.remove), 1); saveMy(); renderMyDroids(); }
+  });
+  myShellBuilt = true;
+}
+
+function renderMyDroids() {
+  const cy = String(myProgress.cycle), R = parseInt(myProgress.rebirth) || 1;
+  const q = (el("search").value || "").trim().toLowerCase();
+  const listEl = el("myList");
+
+  const groups = {};
+  myDroids.forEach((o, idx) => { (groups[o.id] = groups[o.id] || []).push({ tier: o.tier, idx }); });
+
+  const rows = myDroids.map((o, idx) => {
+    const d = byId[o.id];
+    const name = d ? d.name : o.id;
+    const needs = futureNeedsFor(o.id, cy, R);
+    let sellable, reason;
+    if (!needs.length) {
+      sellable = true; reason = "Not needed this cycle";
+    } else {
+      const copies = groups[o.id];
+      const keeper = copies.reduce((best, c) =>
+        (tierRank(c.tier) > tierRank(best.tier) || (tierRank(c.tier) === tierRank(best.tier) && c.idx < best.idx)) ? c : best, copies[0]);
+      if (keeper.idx !== idx) {
+        sellable = true; reason = "Duplicate (a better copy is kept)";
+      } else {
+        sellable = false;
+        const next = needs.slice().sort((a, b) => a.level - b.level)[0];
+        const maxRank = needs.reduce((m, n) => Math.max(m, tierRank(n.tier)), 0);
+        const upgrade = tierRank(o.tier) < maxRank ? ` · upgrade to ${MY_TIERS[maxRank]}` : "";
+        reason = `Needed by R${next.level} (${next.tier})${upgrade}`;
+      }
+    }
+    return { idx, name, tier: o.tier, sellable, reason };
+  });
+
+  const total = myDroids.length;
+  const sellableCount = rows.filter(r => r.sellable).length;
+  el("progressLabel").textContent = "Safe to Sell";
+  el("progressFill").style.width = (total ? Math.round((sellableCount / total) * 100) : 0) + "%";
+  el("progressText").textContent = `${sellableCount} / ${total}`;
+
+  let shown = rows.filter(r => !q || r.name.toLowerCase().includes(q));
+  shown.sort((a, b) => (a.sellable === b.sellable ? a.name.localeCompare(b.name) : (a.sellable ? -1 : 1)));
+
+  if (!total) { listEl.innerHTML = `<div class="empty">No droids yet — add the droids at your base above.</div>`; return; }
+  listEl.innerHTML = shown.length ? shown.map(r => `
+    <div class="my-row ${r.sellable ? "sell" : "keep"}">
+      <span class="my-status">${r.sellable ? "✓ Sell" : "✗ Keep"}</span>
+      <span class="my-name">${r.name}</span>
+      <span class="my-tier ${tierClass(r.tier)}">${r.tier}</span>
+      <span class="my-reason">${r.reason}</span>
+      <button class="my-remove" data-remove="${r.idx}" title="Remove" aria-label="Remove">×</button>
+    </div>`).join("") : `<div class="empty">No droids match your search.</div>`;
+}
+
 function showPage(page) {
   activePage = page;
   const isDroidex = page === "droidex";
+  const isCycle = page.startsWith("cycle");
+  const isMy = page === "mydroids";
   document.querySelectorAll(".page").forEach(p => { p.hidden = (p.id !== `page-${page}`); });
   document.querySelectorAll(".nav-btn").forEach(b => b.classList.toggle("active", b.dataset.page === page));
   const flawLine = el("progressHeader").querySelector(".flawless-line");
   if (flawLine) flawLine.style.display = isDroidex ? "" : "none";
-  el("topControls").classList.toggle("hide-filters", !isDroidex);
+  el("topControls").classList.remove("mode-droidex", "mode-cycle", "mode-mydroids");
+  el("topControls").classList.add(isCycle ? "mode-cycle" : (isMy ? "mode-mydroids" : "mode-droidex"));
   el("searchClear").hidden = !el("search").value;
   if (isDroidex) {
     renderAll();
-  } else if (page.startsWith("cycle")) {
+  } else if (isCycle) {
     const cy = page.replace("cycle", "");
     if (!cycleShellBuilt[cy]) buildCycleShell(cy);
     renderCycleList(cy);
+  } else if (isMy) {
+    if (!myShellBuilt) buildMyDroidsShell();
+    renderMyDroids();
   }
   try { localStorage.setItem("droidtycoons_page", page); } catch (e) {}
 }
