@@ -393,8 +393,8 @@
     padding: 3px 6px; font-size: 11px; font-weight: 800; font-family: inherit; text-transform: uppercase; cursor: pointer; }
   .my-tier-sel option { background: var(--space-1); text-transform: none; }
   /* Add-droid popup (mini Droidex selector) */
-  .add-modal { width: min(700px, 100%); max-height: 88vh; display: flex; flex-direction: column; }
-  .add-modal .m-close { align-self: flex-end; }
+  .add-modal { width: min(700px, 100%); max-height: 88vh; display: flex; flex-direction: column; position: relative; }
+  .add-modal .m-close { position: absolute; top: 16px; right: 18px; float: none; }
   .add-sub { color: var(--muted); font-size: 12.5px; margin-bottom: 12px; }
   .add-tiers { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
   .add-tier { padding: 5px 12px; border-radius: 8px; border: 1.5px solid var(--glass-br); background: var(--panel);
