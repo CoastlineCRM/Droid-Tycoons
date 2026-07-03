@@ -1465,7 +1465,7 @@ function renderMyDroids() {
 
 /* ---- Add-droid popup (mini Droidex selector) ---- */
 let myAddTier = "Base";
-function openAddModal() { renderAddTiers(); renderAddGrid(); el("addOverlay").classList.add("open"); el("addSearch").focus(); }
+function openAddModal() { el("addSearch").value = ""; renderAddTiers(); renderAddGrid(); el("addOverlay").classList.add("open"); el("addSearch").focus(); }
 function closeAddModal() { el("addOverlay").classList.remove("open"); }
 function renderAddTiers() {
   el("addTiers").innerHTML = MY_TIERS.map(t => `<button class="add-tier ${t === myAddTier ? "active" : ""}" data-tier="${t}">${t}</button>`).join("");
