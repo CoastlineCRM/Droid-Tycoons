@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Droidex Tracker — Droid Tycoons</title>
+<link rel="icon" type="image/png" href="icon.png">
+<link rel="apple-touch-icon" href="icon.png">
 <meta name="description" content="A community collection tracker for the Droid Tycoons Droidex. Track which droids you've collected across every finish, no account required.">
 <style>
   /* ============================================================
@@ -116,11 +118,11 @@
   .logo { display: flex; flex-direction: column; gap: 10px; }
   .logo-row { display: flex; align-items: center; gap: 14px; }
   .logo .book {
-    width: 58px; height: 58px; border-radius: 14px; flex: none;
-    background: linear-gradient(135deg, var(--accent), var(--pink) 55%, var(--purple));
-    display: grid; place-items: center; font-size: 30px;
-    box-shadow: 0 8px 30px rgba(181,139,255,.4), inset 0 0 14px rgba(255,255,255,.25);
+    width: 58px; height: 58px; border-radius: 14px; flex: none; overflow: hidden;
+    display: grid; place-items: center;
+    box-shadow: 0 8px 30px rgba(181,139,255,.4);
   }
+  .logo .book img { width: 100%; height: 100%; object-fit: cover; display: block; }
   h1 {
     font-size: clamp(36px, 6vw, 64px); line-height: .9; margin: 0;
     padding-right: .14em; /* room for the italic X so clip-to-text doesn't shave its corner */
@@ -382,7 +384,7 @@
   <header class="top">
     <div class="logo">
       <div class="logo-row">
-        <div class="book">🛸</div>
+        <div class="book"><img src="icon.png" alt="Droidex logo"></div>
         <h1>Droidex</h1>
       </div>
     </div>
