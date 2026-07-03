@@ -178,6 +178,7 @@
   .tab .t-count { font-size: 11px; color: var(--muted); font-weight: 700; margin-left: 6px; }
   .tab.active .t-count { color: #fff; }
   /* per-finish accent colors */
+  .tab[data-finish="All"]     { --fc: var(--accent); }
   .tab[data-finish="Default"] { --fc: var(--accent); }
   .tab[data-finish="Gold"]    { --fc: #ffcf4a; }
   .tab[data-finish="Diamond"] { --fc: var(--cyan); }
@@ -683,6 +684,8 @@ function droidFinishes(d) { return d.finishes || CONFIG.finishes; }
 function finishTotal(finish) { return DROIDEX_DATA.reduce((n, d) => n + (droidFinishes(d).includes(finish) ? 1 : 0), 0); }
 function flawlessCapable(d) { return !d.eventLocked; }
 function countFlawlessTotal() { return DROIDEX_DATA.reduce((n, d) => n + (flawlessCapable(d) ? 1 : 0), 0); }
+function totalCards() { return DROIDEX_DATA.reduce((n, d) => n + droidFinishes(d).length, 0); }
+function collectedCards() { let n = 0; for (const d of DROIDEX_DATA) for (const fin of droidFinishes(d)) if (isCollected(d.id, fin)) n++; return n; }
 function typeClass(t) { return t === "Worker" ? "t-worker" : t === "Astromech" ? "t-astromech" : t === "Battle" ? "t-battle" : ""; }
 // Accent color per finish — drives finish tags AND card border color.
 const FINISH_COLOR = { Default: "var(--muted)", Gold: "#ffcf4a", Diamond: "var(--cyan)", Rainbow: "var(--pink)", Beskar: "#cfd8ee" };
@@ -714,12 +717,16 @@ const el = (id) => document.getElementById(id);
 const byId = Object.fromEntries(DROIDEX_DATA.map(d => [d.id, d]));
 
 function renderTabs() {
-  el("tabs").innerHTML = CONFIG.finishes.map(f => {
+  const allActive = state.activeFinish === "All" ? "active" : "";
+  let html = `<button class="tab ${allActive}" data-finish="All"><span class="tab-label">All</span>
+      <span class="t-count">${collectedCards()}/${totalCards()}</span></button>`;
+  html += CONFIG.finishes.map(f => {
     const active = f === state.activeFinish ? "active" : "";
     const c = countCollected(f);
     return `<button class="tab ${active}" data-finish="${f}"><span class="tab-label">${f}</span>
       <span class="t-count">${c}/${finishTotal(f)}</span></button>`;
   }).join("");
+  el("tabs").innerHTML = html;
 }
 
 function renderStats() {
@@ -754,6 +761,7 @@ function renderGrid() {
   el("filterRole").classList.toggle("filter-on", !!f.type);
   el("filterStatus").classList.toggle("filter-on", !!f.status);
   const searchMode = f.q !== "";
+  const blended = searchMode || state.activeFinish === "All";
   const activeFinish = state.activeFinish;
 
   // Searching blends every finish together, so hide the finish tabs.
@@ -774,7 +782,7 @@ function renderGrid() {
   // Build cards. Normal: one card per droid in the active finish.
   // Search: one card per (droid × finish), blended and ordered low → high.
   let cards = [];
-  if (searchMode) {
+  if (blended) {
     droids = droids.slice().sort((a, b) =>
       (rarityRank[a.rarity] - rarityRank[b.rarity]) || a.name.localeCompare(b.name));
     for (const d of droids)
@@ -801,7 +809,7 @@ function renderGrid() {
         <div class="badge" data-toggle="${d.id}" data-finish="${finish}" title="Mark ${finish} collected">✓</div>
         <div class="art">${art}</div>
         <div class="name">${d.name}</div>
-        ${searchMode ? `<div class="finish-tag" style="color:${fc}">${finish}</div>` : ""}
+        ${blended ? `<div class="finish-tag" style="color:${fc}">${finish}</div>` : ""}
         <div class="rarity" style="color:${rc}">${d.rarity}</div>
       </div>`;
   }).join("");
