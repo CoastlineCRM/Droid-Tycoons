@@ -134,7 +134,7 @@
                 text-shadow: 0 0 18px rgba(79,227,255,.35); }
   .count-main small { color: var(--muted); font-weight: 600; }
   .flawless-line { font-size: 14px; color: var(--muted); font-weight: 700; display: inline-flex; align-items: center; gap: 5px; }
-  .flawless-line .star-ico { width: 14px; height: 14px; animation: none; }
+  .progress .flawless-line { display: flex; margin-top: 7px; }
   .flawless-line b { color: var(--r-legendary); text-shadow: 0 0 12px rgba(255,207,74,.5); }
 
   /* ---------- Overall completion (compact, top-right) ---------- */
@@ -185,6 +185,21 @@
   .tab[data-finish="Diamond"] { --fc: var(--cyan); }
   .tab[data-finish="Rainbow"] { --fc: var(--pink); }
   .tab[data-finish="Beskar"]  { --fc: #cfd8ee; }
+  /* Rainbow tab: moving rainbow border + rainbow label (matches the cards) */
+  .tab[data-finish="Rainbow"] { position: relative; border-color: transparent !important; }
+  .tab[data-finish="Rainbow"]::before {
+    content: ""; position: absolute; inset: 0; border-radius: inherit; padding: 1.5px;
+    background: linear-gradient(115deg, #ff5e5e, #ffcf4a, #62e57a, #4fc3ff, #b58bff, #ff5ec4, #ff5e5e);
+    background-size: 250% 250%;
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor; mask-composite: exclude;
+    animation: rainbowShift 3.5s linear infinite; pointer-events: none;
+  }
+  .tab[data-finish="Rainbow"] .tab-label {
+    background: linear-gradient(115deg, #ff5e5e, #ffcf4a, #62e57a, #4fc3ff, #b58bff, #ff5ec4, #ff5e5e);
+    background-size: 250% 250%; -webkit-background-clip: text; background-clip: text; color: transparent;
+    animation: rainbowShift 3.5s linear infinite; font-weight: 900;
+  }
 
   /* ---------- Controls ---------- */
   .controls { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 16px; }
@@ -249,12 +264,14 @@
                     box-shadow: 0 0 0 1px color-mix(in srgb, var(--fc) 45%, transparent) inset, 0 8px 26px color-mix(in srgb, var(--fc) 32%, rgba(0,0,0,.35)); }
   .card.uncollected .art, .card.uncollected .name { filter: grayscale(1) brightness(.62); opacity: .82; }
   .card.uncollected:hover .art { filter: none; opacity: 1; }  /* reveal true color on hover */
-  /* Rainbow finish gets an actual rainbow frame */
+  /* Rainbow finish gets a moving, shiny rainbow frame */
+  .card.fin-rainbow, .card.fin-rainbow:hover { border-color: transparent; }
   .card.fin-rainbow::before {
-    background: linear-gradient(125deg, #ff5e5e, #ffcf4a, #62e57a, #4fc3ff, #b58bff, #ff5ec4, #ff5e5e);
-    opacity: .9;
+    background: linear-gradient(115deg, #ff5e5e, #ffcf4a, #62e57a, #4fc3ff, #b58bff, #ff5ec4, #ff5e5e);
+    background-size: 250% 250%; opacity: 1;
+    animation: rainbowShift 3.5s linear infinite;
   }
-  .card.fin-rainbow:hover, .card.fin-rainbow.collected { border-color: #b58bff; }
+  @keyframes rainbowShift { 0% { background-position: 0% 50%; } 100% { background-position: 250% 50%; } }
 
   .art {
     aspect-ratio: 1/1; border-radius: 10px; overflow: hidden; position: relative;
@@ -332,7 +349,6 @@
     padding: 9px 15px; border-radius: 10px; border: 1.5px solid var(--glass-br); background: rgba(12,16,48,.5);
     color: var(--muted); font-weight: 800; cursor: pointer; transition: .15s;
   }
-  .flawless-toggle button .star-ico { animation: none; }
   .flawless-toggle button.on { border-color: var(--r-legendary); color: var(--r-legendary);
     background: rgba(255,207,74,.14); box-shadow: 0 0 16px rgba(255,207,74,.4); }
   .m-close { position: sticky; top: 0; float: right; background: none; border: none; color: var(--muted);
@@ -373,13 +389,13 @@
       </div>
       <div class="stats-row">
         <span class="count-main" id="countMain">0<small>/0</small></span>
-        <span class="flawless-line"><svg viewBox="0 0 24 24" class="star-ico"><path d="M12 2l2.9 6.26 6.85.72-5.12 4.6 1.43 6.72L12 17.7 5.94 20.3l1.43-6.72L2.25 8.98l6.85-.72z"/></svg> Flawless <b id="flawlessCount">0/0</b></span>
       </div>
     </div>
 
     <div class="progress">
       <div class="label" id="progressLabel">—</div>
       <div class="bar"><i id="progressFill"></i><span id="progressText"></span></div>
+      <span class="flawless-line"><svg viewBox="0 0 24 24" class="star-ico"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg> Flawless <b id="flawlessCount">0/0</b></span>
     </div>
   </header>
 
@@ -597,7 +613,7 @@ function typeClass(t) { return t === "Worker" ? "t-worker" : t === "Astromech" ?
 const FINISH_COLOR = { Default: "var(--muted)", Gold: "#ffcf4a", Diamond: "var(--cyan)", Rainbow: "var(--pink)", Beskar: "#cfd8ee" };
 
 // Flawless star (reused on cards + in the detail popup).
-const STAR_SVG = `<svg viewBox="0 0 24 24" class="star-ico"><path d="M12 2l2.9 6.26 6.85.72-5.12 4.6 1.43 6.72L12 17.7 5.94 20.3l1.43-6.72L2.25 8.98l6.85-.72z"/></svg>`;
+const STAR_SVG = `<svg viewBox="0 0 24 24" class="star-ico"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>`;
 
 // Black negative-space type glyphs, shown inside the colored badge in the popup.
 function typeSvg(t) {
@@ -626,7 +642,7 @@ function renderTabs() {
   el("tabs").innerHTML = CONFIG.finishes.map(f => {
     const active = f === state.activeFinish ? "active" : "";
     const c = countCollected(f);
-    return `<button class="tab ${active}" data-finish="${f}">${f}
+    return `<button class="tab ${active}" data-finish="${f}"><span class="tab-label">${f}</span>
       <span class="t-count">${c}/${finishTotal(f)}</span></button>`;
   }).join("");
 }
