@@ -211,6 +211,7 @@
   .controls select option { background: var(--space-1); color: var(--text); }
   .controls select:focus { outline: none; border-color: var(--cyan); box-shadow: 0 0 16px rgba(79,227,255,.35); }
   .controls select.filter-on { border-color: var(--accent); color: #fff; box-shadow: 0 0 12px rgba(255,138,61,.35); }
+  .controls.hide-filters .droidex-only { display: none; }  /* rarity/type/status only on Droidex */
   button.btn {
     background: var(--panel); border: 1px solid var(--glass-br); color: var(--text);
     border-radius: 8px; padding: 7px 12px; font-size: 12px; font-weight: 700;
@@ -460,25 +461,25 @@
     <button class="nav-btn" data-page="cycle3">Cycle 3</button>
   </nav>
 
+  <!-- Global controls — search + settings persist across all pages -->
+  <div class="controls" id="topControls">
+    <div class="search-field">
+      <svg class="search-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 2a8 8 0 1 0 4.9 14.32l5.4 5.38 1.4-1.42-5.38-5.39A8 8 0 0 0 10 2zm0 2a6 6 0 1 1 0 12 6 6 0 0 1 0-12z"/></svg>
+      <input type="search" id="search" placeholder="Search droids" autocomplete="off">
+      <button class="search-clear" id="searchClear" aria-label="Clear search" hidden>×</button>
+    </div>
+    <select id="filterRarity" class="droidex-only"><option value="">All rarities</option></select>
+    <select id="filterRole" class="droidex-only"><option value="">All types</option></select>
+    <select id="filterStatus" class="droidex-only">
+      <option value="">All</option>
+      <option value="collected">Collected</option>
+      <option value="missing">Missing</option>
+    </select>
+    <button class="btn gear" id="btnSettings" title="Settings" aria-label="Settings">⚙</button>
+  </div>
+
   <!-- ============ DROIDEX PAGE ============ -->
   <div id="page-droidex" class="page">
-    <!-- Controls: search grows to fill; filters + settings share the row -->
-    <div class="controls">
-      <div class="search-field">
-        <svg class="search-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 2a8 8 0 1 0 4.9 14.32l5.4 5.38 1.4-1.42-5.38-5.39A8 8 0 0 0 10 2zm0 2a6 6 0 1 1 0 12 6 6 0 0 1 0-12z"/></svg>
-        <input type="search" id="search" placeholder="Search droids" autocomplete="off">
-        <button class="search-clear" id="searchClear" aria-label="Clear search" hidden>×</button>
-      </div>
-      <select id="filterRarity"><option value="">All rarities</option></select>
-      <select id="filterRole"><option value="">All types</option></select>
-      <select id="filterStatus">
-        <option value="">All</option>
-        <option value="collected">Collected</option>
-        <option value="missing">Missing</option>
-      </select>
-      <button class="btn gear" id="btnSettings" title="Settings" aria-label="Settings">⚙</button>
-    </div>
-
     <!-- Finish tabs (hidden while searching) -->
     <div class="tabs" id="tabs"></div>
 
@@ -913,11 +914,15 @@ el("tabs").addEventListener("click", (e) => {
   renderAll();
 });
 
-// Filters
-["search", "filterRarity", "filterRole", "filterStatus"].forEach(id => {
-  el(id).addEventListener("input", renderGrid);
-});
-el("searchClear").onclick = () => { el("search").value = ""; renderGrid(); el("search").focus(); };
+// Global search drives whichever page is active; rarity/type/status are Droidex-only.
+function onGlobalSearch() {
+  el("searchClear").hidden = !el("search").value;
+  if (activePage === "droidex") renderGrid();
+  else if (activePage.startsWith("cycle")) renderCycleList(activePage.replace("cycle", ""));
+}
+el("search").addEventListener("input", onGlobalSearch);
+["filterRarity", "filterRole", "filterStatus"].forEach(id => el(id).addEventListener("input", renderGrid));
+el("searchClear").onclick = () => { el("search").value = ""; onGlobalSearch(); el("search").focus(); };
 
 // Overlays: click outside modal / gear popup, or Esc, closes
 el("overlay").addEventListener("click", (e) => { if (e.target === el("overlay")) closeModal(); });
@@ -1094,8 +1099,6 @@ function cycleCreditsKey(cy, lvl) { return `c${cy}|credits|${lvl}`; }
 function tierClass(t) { return "t-" + t.toLowerCase(); }
 function toggleCycleKey(k) { if (cycleCollected.has(k)) cycleCollected.delete(k); else cycleCollected.add(k); saveCycleState(); }
 
-const SEARCH_SVG = `<svg class="search-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 2a8 8 0 1 0 4.9 14.32l5.4 5.38 1.4-1.42-5.38-5.39A8 8 0 0 0 10 2zm0 2a6 6 0 1 1 0 12 6 6 0 0 1 0-12z"/></svg>`;
-
 function buildCycleShell(cy) {
   el(`page-cycle${cy}`).innerHTML = `
     <div class="cycle-head">
@@ -1107,15 +1110,11 @@ function buildCycleShell(cy) {
       <div class="bar"><i id="cycFill${cy}"></i><span id="cycText${cy}"></span></div>
     </div>
     <div class="controls">
-      <div class="search-field">${SEARCH_SVG}
-        <input type="search" id="cycSearch${cy}" placeholder="Search droids or a tier" autocomplete="off">
-      </div>
       <button class="btn" id="cycNeeded${cy}">Needed only</button>
       <button class="btn danger" id="cycReset${cy}">Reset</button>
     </div>
     <div id="cycList${cy}"></div>`;
 
-  el(`cycSearch${cy}`).addEventListener("input", () => renderCycleList(cy));
   el(`cycNeeded${cy}`).addEventListener("click", (e) => {
     cycNeeded[cy] = !cycNeeded[cy];
     e.currentTarget.classList.toggle("active", cycNeeded[cy]);
@@ -1133,7 +1132,7 @@ function buildCycleShell(cy) {
 function renderCycleList(cy) {
   const data = CYCLES[cy];
   const listEl = el(`cycList${cy}`);
-  const q = (el(`cycSearch${cy}`)?.value || "").trim().toLowerCase();
+  const q = (el("search").value || "").trim().toLowerCase();
   const needed = !!cycNeeded[cy];
 
   let total = 0, done = 0;
@@ -1218,10 +1217,15 @@ function onCycleListClick(cy, e) {
 
 function showPage(page) {
   activePage = page;
+  const isDroidex = page === "droidex";
   document.querySelectorAll(".page").forEach(p => { p.hidden = (p.id !== `page-${page}`); });
   document.querySelectorAll(".nav-btn").forEach(b => b.classList.toggle("active", b.dataset.page === page));
-  el("progressHeader").style.display = (page === "droidex") ? "" : "none";
-  if (page.startsWith("cycle")) {
+  el("progressHeader").style.display = isDroidex ? "" : "none";
+  el("topControls").classList.toggle("hide-filters", !isDroidex);
+  el("searchClear").hidden = !el("search").value;
+  if (isDroidex) {
+    renderGrid();
+  } else if (page.startsWith("cycle")) {
     const cy = page.replace("cycle", "");
     if (!cycleShellBuilt[cy]) buildCycleShell(cy);
     renderCycleList(cy);
