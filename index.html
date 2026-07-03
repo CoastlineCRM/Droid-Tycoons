@@ -298,6 +298,11 @@
   .m-close:hover { color: #fff; }
 
   footer { text-align: center; color: var(--muted); font-size: 12px; margin-top: 44px; line-height: 1.8; }
+  .credit {
+    background: linear-gradient(92deg, var(--cyan), var(--purple) 50%, var(--pink));
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+    font-weight: 900; letter-spacing: .3px; filter: drop-shadow(0 0 8px rgba(181,139,255,.45));
+  }
   .toast {
     position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%) translateY(20px);
     background: linear-gradient(135deg, var(--accent), var(--pink)); color: #fff; font-weight: 800;
@@ -359,7 +364,8 @@
   <div class="empty" id="empty" hidden>No droids match your filters.</div>
 
   <footer>
-    Droidex Tracker · a fan-made companion for <b>Droid Tycoons</b>.
+    Droidex Tracker · a fan-made companion for <b>Droid Tycoons</b>.<br>
+    Made by <b class="credit">BeskarWizard</b>
   </footer>
 </div>
 
