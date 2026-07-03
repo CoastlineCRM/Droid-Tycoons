@@ -43,7 +43,8 @@
     --r-rare:      #4fc3ff;
     --r-epic:      #c88bff;
     --r-legendary: #ffcf4a;
-    --r-mythic:    #ff6a86;
+    --r-mythic:    #ff5a5a;
+    --r-iconic:    #ff5ec4;
   }
 
   * { box-sizing: border-box; }
@@ -111,7 +112,10 @@
 
   /* ---------- Header ---------- */
   header.top { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; flex-wrap: wrap; margin-bottom: 6px; }
-  .logo { display: flex; align-items: center; gap: 14px; }
+  .logo { display: flex; flex-direction: column; gap: 10px; }
+  .logo-row { display: flex; align-items: center; gap: 14px; }
+  .stats-row { display: flex; align-items: baseline; gap: 20px; flex-wrap: wrap; }
+  .count-main { margin-left: 0 !important; }
   .logo .book {
     width: 58px; height: 58px; border-radius: 14px; flex: none;
     background: linear-gradient(135deg, var(--accent), var(--pink) 55%, var(--purple));
@@ -120,6 +124,7 @@
   }
   h1 {
     font-size: clamp(36px, 6vw, 64px); line-height: .9; margin: 0;
+    padding-right: .14em; /* room for the italic X so clip-to-text doesn't shave its corner */
     font-weight: 900; letter-spacing: -1px; font-style: italic; text-transform: uppercase;
     background: linear-gradient(92deg, var(--accent) 0%, var(--pink) 45%, var(--purple) 100%);
     -webkit-background-clip: text; background-clip: text; color: transparent;
@@ -128,13 +133,13 @@
   .count-main { font-size: clamp(22px, 3vw, 32px); font-weight: 800; color: #fff; margin-left: 4px;
                 text-shadow: 0 0 18px rgba(79,227,255,.35); }
   .count-main small { color: var(--muted); font-weight: 600; }
-  .shiny-line { font-size: 14px; color: var(--muted); font-weight: 700; }
-  .shiny-line b { color: var(--r-legendary); text-shadow: 0 0 12px rgba(255,207,74,.5); }
+  .flawless-line { font-size: 14px; color: var(--muted); font-weight: 700; }
+  .flawless-line b { color: var(--r-legendary); text-shadow: 0 0 12px rgba(255,207,74,.5); }
 
   /* ---------- Overall completion (compact, top-right) ---------- */
   .progress { flex: 0 0 auto; width: 210px; max-width: 46vw; text-align: right; margin-top: 4px; }
   .progress .label { font-size: 11px; font-weight: 800; color: var(--accent-2); margin-bottom: 5px; letter-spacing: .2px;
-                      text-shadow: 0 0 12px rgba(255,138,61,.35); }
+                      text-align: left; text-shadow: 0 0 12px rgba(255,138,61,.35); }
   .bar {
     height: 18px; background: rgba(12,16,48,.6); border: 1px solid rgba(255,138,61,.55);
     border-radius: 6px; overflow: hidden; position: relative;
@@ -159,12 +164,12 @@
   }
 
   /* ---------- Finish tabs ---------- */
-  .tabs { display: flex; gap: 10px; flex-wrap: wrap; margin: 22px 0 16px; }
+  .tabs { display: flex; gap: 7px; flex-wrap: wrap; margin: 18px 0 12px; }
   .tab {
     --fc: var(--accent);
-    padding: 9px 20px; border-radius: 10px; border: 1.5px solid var(--glass-br);
-    background: var(--panel); color: var(--muted); font-weight: 800; letter-spacing: .5px;
-    text-transform: uppercase; font-size: 14px; cursor: pointer; transition: .18s;
+    padding: 6px 13px; border-radius: 8px; border: 1.5px solid var(--glass-br);
+    background: var(--panel); color: var(--muted); font-weight: 800; letter-spacing: .4px;
+    text-transform: uppercase; font-size: 12.5px; cursor: pointer; transition: .18s;
     backdrop-filter: blur(8px);
   }
   .tab:hover { color: #fff; border-color: var(--fc); transform: translateY(-1px); }
@@ -181,10 +186,10 @@
   .tab[data-finish="Beskar"]  { --fc: #cfd8ee; }
 
   /* ---------- Controls ---------- */
-  .controls { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 20px; }
+  .controls { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 16px; }
   .controls input[type=search], .controls select {
     background: var(--panel); border: 1px solid var(--glass-br); color: var(--text);
-    border-radius: 10px; padding: 10px 12px; font-size: 14px; font-family: inherit;
+    border-radius: 8px; padding: 7px 10px; font-size: 13px; font-family: inherit;
     backdrop-filter: blur(8px);
   }
   .controls select option { background: var(--space-1); color: var(--text); }
@@ -195,7 +200,7 @@
   .spacer { flex: 1 1 auto; }
   button.btn {
     background: var(--panel); border: 1px solid var(--glass-br); color: var(--text);
-    border-radius: 10px; padding: 10px 15px; font-size: 13px; font-weight: 700;
+    border-radius: 8px; padding: 7px 12px; font-size: 12px; font-weight: 700;
     cursor: pointer; font-family: inherit; transition: .18s; backdrop-filter: blur(8px);
   }
   button.btn:hover { border-color: var(--cyan); color: #fff; box-shadow: 0 0 16px rgba(79,227,255,.3); }
@@ -245,7 +250,7 @@
   .badge:hover { border-color: var(--accent); box-shadow: 0 0 12px rgba(255,138,61,.5); }
   .card.collected .badge { background: linear-gradient(135deg, var(--accent), var(--pink)); border-color: transparent; color: #fff;
                            box-shadow: 0 0 14px rgba(255,138,61,.55); }
-  .shiny-mark { position: absolute; top: 9px; left: 9px; font-size: 16px; z-index: 3;
+  .flawless-mark { position: absolute; top: 9px; left: 9px; font-size: 16px; z-index: 3;
                 filter: drop-shadow(0 0 6px gold); animation: twinkle 2.5s ease-in-out infinite; }
 
   .empty { text-align: center; color: var(--muted); padding: 60px 20px; font-size: 15px; }
@@ -286,12 +291,12 @@
   .finish-toggles button.on { border-color: var(--accent);
     background: linear-gradient(135deg, rgba(255,138,61,.35), rgba(255,116,200,.28)); color: #fff;
     box-shadow: 0 0 16px rgba(255,138,61,.4); }
-  .shiny-toggle { display: flex; align-items: center; gap: 10px; margin-top: 18px; }
-  .shiny-toggle button {
+  .flawless-toggle { display: flex; align-items: center; gap: 10px; margin-top: 18px; }
+  .flawless-toggle button {
     padding: 9px 15px; border-radius: 10px; border: 1.5px solid var(--glass-br); background: rgba(12,16,48,.5);
     color: var(--muted); font-weight: 800; cursor: pointer; transition: .15s;
   }
-  .shiny-toggle button.on { border-color: var(--r-legendary); color: var(--r-legendary);
+  .flawless-toggle button.on { border-color: var(--r-legendary); color: var(--r-legendary);
     background: rgba(255,207,74,.14); box-shadow: 0 0 16px rgba(255,207,74,.4); }
   .m-close { position: sticky; top: 0; float: right; background: none; border: none; color: var(--muted);
              font-size: 28px; cursor: pointer; line-height: 1; }
@@ -325,11 +330,13 @@
 
   <header class="top">
     <div class="logo">
-      <div class="book">🛸</div>
-      <div>
+      <div class="logo-row">
+        <div class="book">🛸</div>
         <h1>Droidex</h1>
-        <div><span class="count-main" id="countMain">0<small>/0</small></span></div>
-        <div class="shiny-line">✨ Shiny <b id="shinyCount">0/0</b></div>
+      </div>
+      <div class="stats-row">
+        <span class="count-main" id="countMain">0<small>/0</small></span>
+        <span class="flawless-line">✨ Flawless <b id="flawlessCount">0/0</b></span>
       </div>
     </div>
 
@@ -344,9 +351,9 @@
 
   <!-- Controls -->
   <div class="controls">
-    <input type="search" id="search" placeholder="Search name, role, or perk…" autocomplete="off">
+    <input type="search" id="search" placeholder="Search name, type, or rarity…" autocomplete="off">
     <select id="filterRarity"><option value="">All rarities</option></select>
-    <select id="filterRole"><option value="">All roles</option></select>
+    <select id="filterRole"><option value="">All types</option></select>
     <select id="filterStatus">
       <option value="">All</option>
       <option value="collected">Collected (this finish)</option>
@@ -393,35 +400,79 @@ const CONFIG = {
     { name: "Epic",      color: "var(--r-epic)" },
     { name: "Legendary", color: "var(--r-legendary)" },
     { name: "Mythic",    color: "var(--r-mythic)" },
+    { name: "Iconic",    color: "var(--r-iconic)" },
   ],
-
 };
 
 /* ============================================================
-   2. CATALOG — the master Droidex.
-   These ~10 are SAMPLES to get you started (PIT uses the real
-   values from the game). Add the rest by copying an entry.
-   Fields: id (unique), name, rarity, role, perk, image (URL or
-   empty for a placeholder icon).
+   2. CATALOG — the master Droidex (real Droid Tycoon data).
+   Sourced from the community Droidex dataset
+   (github.com/erikpeik/droidex) + the in-game Droidex.
+   54 droids: 51 collectible in all 5 finishes, plus 3 event-locked
+   Iconic droids that only exist in the Default finish.
+   Fields: id, name, rarity, type (Worker/Astromech/Battle),
+   income (Default credits/sec). Optional: finishes[], eventLocked.
    ============================================================ */
 const DROIDEX_DATA = [
-  { id: "pit",      name: "PIT",      rarity: "Common",    role: "Worker",   perk: "10% Droid Crafting Speed", image: "" },
-  { id: "sprocket", name: "Sprocket", rarity: "Common",    role: "Worker",   perk: "5% Salvage Yield",          image: "" },
-  { id: "rusty",    name: "Rusty",    rarity: "Common",    role: "Gatherer", perk: "5% Scrap Income",           image: "" },
-  { id: "bolt",     name: "Bolt",     rarity: "Rare",      role: "Gatherer", perk: "8% Ore Drop Rate",          image: "" },
-  { id: "vandal",   name: "Vandal",   rarity: "Rare",      role: "Combat",   perk: "12% Attack Speed",          image: "" },
-  { id: "medix",    name: "Medix",    rarity: "Rare",      role: "Support",  perk: "10% Repair Rate",           image: "" },
-  { id: "cipher",   name: "Cipher",   rarity: "Epic",      role: "Support",  perk: "15% Research Speed",        image: "" },
-  { id: "havoc",    name: "Havoc",    rarity: "Epic",      role: "Combat",   perk: "20% Critical Damage",       image: "" },
-  { id: "aurum",    name: "Aurum",    rarity: "Legendary", role: "Worker",   perk: "25% Credit Income",         image: "" },
-  { id: "omega",    name: "Omega",    rarity: "Legendary", role: "Combat",   perk: "30% All Stats",             image: "" },
-  { id: "seraph",   name: "Seraph",   rarity: "Mythic",    role: "Support",  perk: "50% Global Multiplier",     image: "" },
-  { id: "titan",    name: "Titan",    rarity: "Mythic",    role: "Combat",   perk: "2x Boss Damage",            image: "" },
+  { id: "mouse",           name: "MOUSE",             rarity: "Common",     type: "Worker",     income: "2/s" },
+  { id: "pit",             name: "PIT",               rarity: "Common",     type: "Worker",     income: "2/s" },
+  { id: "gonk",            name: "GONK",              rarity: "Common",     type: "Worker",     income: "4/s" },
+  { id: "cb",              name: "CB",                rarity: "Common",     type: "Astromech",  income: "3/s" },
+  { id: "r3",              name: "R3",                rarity: "Common",     type: "Astromech",  income: "3/s" },
+  { id: "r5",              name: "R5",                rarity: "Common",     type: "Astromech",  income: "3/s" },
+  { id: "r8",              name: "R8",                rarity: "Common",     type: "Astromech",  income: "4/s" },
+  { id: "imperial-probe",  name: "IMPERIAL PROBE",    rarity: "Common",     type: "Battle",     income: "6/s" },
+  { id: "b1-battle",       name: "B1 BATTLE",         rarity: "Common",     type: "Battle",     income: "5/s" },
+  { id: "drk-1-probe",     name: "DRK-1 PROBE",       rarity: "Common",     type: "Battle",     income: "3/s" },
+  { id: "id10",            name: "ID10",              rarity: "Common",     type: "Battle",     income: "4/s" },
+  { id: "bdx-explorer",    name: "BDX EXPLORER",      rarity: "Rare",       type: "Worker",     income: "15/s" },
+  { id: "arg",             name: "ARG",               rarity: "Rare",       type: "Worker",     income: "42/s" },
+  { id: "senate-hovercam", name: "SENATE HOVERCAM",   rarity: "Rare",       type: "Worker",     income: "46/s" },
+  { id: "bu-4d",           name: "BU-4D",             rarity: "Rare",       type: "Worker",     income: "58/s" },
+  { id: "bal-core",        name: "BAL-CORE",          rarity: "Rare",       type: "Worker",     income: "23/s" },
+  { id: "roll-r",          name: "ROLL-R",            rarity: "Rare",       type: "Worker",     income: "31/s" },
+  { id: "2bb",             name: "2BB",               rarity: "Rare",       type: "Astromech",  income: "17/s" },
+  { id: "a-lt",            name: "A-LT",              rarity: "Rare",       type: "Astromech",  income: "36/s" },
+  { id: "r4",              name: "R4",                rarity: "Rare",       type: "Astromech",  income: "50/s" },
+  { id: "r9",              name: "R9",                rarity: "Rare",       type: "Astromech",  income: "54/s" },
+  { id: "b1-security",     name: "B1 SECURITY",       rarity: "Rare",       type: "Battle",     income: "66/s" },
+  { id: "nav-ex",          name: "NAV-EX",            rarity: "Rare",       type: "Battle",     income: "18/s" },
+  { id: "vect-arm",        name: "VECT-ARM",          rarity: "Rare",       type: "Battle",     income: "27/s" },
+  { id: "hov-r",           name: "HOV-R",             rarity: "Rare",       type: "Battle",     income: "62/s" },
+  { id: "groundmech",      name: "GROUNDMECH",        rarity: "Epic",       type: "Worker",     income: "120/s" },
+  { id: "lo",              name: "LO",                rarity: "Epic",       type: "Worker",     income: "240/s" },
+  { id: "amp-walker",      name: "AMP WALKER",        rarity: "Epic",       type: "Worker",     income: "570/s" },
+  { id: "sen-tri",         name: "SEN-TRI",           rarity: "Epic",       type: "Worker",     income: "510/s" },
+  { id: "opti-pod",        name: "OPTI-POD",          rarity: "Epic",       type: "Worker",     income: "390/s" },
+  { id: "gunrunner",       name: "GUNRUNNER",         rarity: "Epic",       type: "Worker",     income: "660/s" },
+  { id: "bb",              name: "BB",                rarity: "Epic",       type: "Astromech",  income: "150/s" },
+  { id: "r2",              name: "R2",                rarity: "Epic",       type: "Astromech",  income: "360/s" },
+  { id: "r6",              name: "R6",                rarity: "Epic",       type: "Astromech",  income: "300/s" },
+  { id: "trak-r",          name: "TRAK-R",            rarity: "Epic",       type: "Astromech",  income: "330/s" },
+  { id: "orb-walker",      name: "ORB-WALKER",        rarity: "Epic",       type: "Astromech",  income: "180/s" },
+  { id: "util-tec",        name: "UTIL-TEC",          rarity: "Epic",       type: "Astromech",  income: "210/s" },
+  { id: "b1-heavy",        name: "B1 HEAVY",          rarity: "Epic",       type: "Battle",     income: "630/s" },
+  { id: "b2-super",        name: "B2 SUPER",          rarity: "Epic",       type: "Battle",     income: "420/s" },
+  { id: "b2-heavy",        name: "B2 HEAVY",          rarity: "Epic",       type: "Battle",     income: "480/s" },
+  { id: "strike-orb",      name: "STRIKE-ORB",        rarity: "Epic",       type: "Battle",     income: "540/s" },
+  { id: "haul-r",          name: "HAUL-R",            rarity: "Epic",       type: "Battle",     income: "270/s" },
+  { id: "lng-shot",        name: "LNG-SHOT",          rarity: "Epic",       type: "Battle",     income: "450/s" },
+  { id: "proto-roller",    name: "PROTO-ROLLER",      rarity: "Legendary",  type: "Worker",     income: "972/s" },
+  { id: "mecha-droid",     name: "MECHA-DROID",       rarity: "Legendary",  type: "Worker",     income: "1.24k/s" },
+  { id: "mono-walker",     name: "MONO-WALKER",       rarity: "Legendary",  type: "Worker",     income: "1.50k/s" },
+  { id: "bb9",             name: "BB9",               rarity: "Legendary",  type: "Astromech",  income: "1.30k/s" },
+  { id: "r7",              name: "R7",                rarity: "Legendary",  type: "Astromech",  income: "1.50k/s" },
+  { id: "b2-rp",           name: "B2-RP",             rarity: "Legendary",  type: "Battle",     income: "1.30k/s" },
+  { id: "cyclo-grav",      name: "CYCLO-GRAV",        rarity: "Legendary",  type: "Battle",     income: "1.26k/s" },
+  { id: "opti-strike",     name: "OPTI-STRIKE",       rarity: "Legendary",  type: "Battle",     income: "1.50k/s" },
+  { id: "bb8",             name: "BB8",               rarity: "Iconic",     type: "Astromech",  income: "5%/s", finishes: ["Default"], eventLocked: true },
+  { id: "mister-bones",    name: "MISTER BONES",      rarity: "Iconic",     type: "Battle",     income: "5%/s", finishes: ["Default"], eventLocked: true },
+  { id: "ig-11-marshal",   name: "IG-11 MARSHAL",     rarity: "Iconic",     type: "Battle",     income: "5%/s", finishes: ["Default"], eventLocked: true },
 ];
 
 /* ============================================================
    3. STATE — loaded from localStorage.
-   Shape: { version, activeFinish, collected: { id: {finish:bool} }, shiny: { id:bool } }
+   Shape: { version, activeFinish, collected: { id: {finish:bool} }, flawless: { id:bool } }
    ============================================================ */
 const rarityColor = Object.fromEntries(CONFIG.rarities.map(r => [r.name, r.color]));
 const rarityRank  = Object.fromEntries(CONFIG.rarities.map((r, i) => [r.name, i]));
@@ -429,7 +480,7 @@ const rarityRank  = Object.fromEntries(CONFIG.rarities.map((r, i) => [r.name, i]
 let state = loadState();
 
 function defaultState() {
-  return { version: 1, activeFinish: CONFIG.finishes[0], collected: {}, shiny: {} };
+  return { version: 1, activeFinish: CONFIG.finishes[0], collected: {}, flawless: {} };
 }
 function loadState() {
   try {
@@ -464,15 +515,23 @@ function setCollected(id, finish, val) {
 function toggleCollected(id, finish) {
   setCollected(id, finish, !isCollected(id, finish));
 }
-function isShiny(id) { return !!state.shiny[id]; }
-function toggleShiny(id) {
-  if (state.shiny[id]) delete state.shiny[id]; else state.shiny[id] = true;
+function isFlawless(id) { return !!state.flawless[id]; }
+function toggleFlawless(id) {
+  if (state.flawless[id]) delete state.flawless[id]; else state.flawless[id] = true;
   saveState();
 }
 function countCollected(finish) {
   return DROIDEX_DATA.reduce((n, d) => n + (isCollected(d.id, finish) ? 1 : 0), 0);
 }
-function countShiny() { return DROIDEX_DATA.reduce((n, d) => n + (isShiny(d.id) ? 1 : 0), 0); }
+function countFlawless() { return DROIDEX_DATA.reduce((n, d) => n + (isFlawless(d.id) ? 1 : 0), 0); }
+
+/* ---- catalog helpers ---- */
+// A droid may only exist in some finishes (event-locked Iconics are Default-only).
+function droidFinishes(d) { return d.finishes || CONFIG.finishes; }
+function finishTotal(finish) { return DROIDEX_DATA.reduce((n, d) => n + (droidFinishes(d).includes(finish) ? 1 : 0), 0); }
+function flawlessCapable(d) { return !d.eventLocked; }
+function countFlawlessTotal() { return DROIDEX_DATA.reduce((n, d) => n + (flawlessCapable(d) ? 1 : 0), 0); }
+function typeIcon(t) { return t === "Worker" ? "🔧" : t === "Astromech" ? "⚙️" : t === "Battle" ? "⚔️" : "🤖"; }
 
 /* ============================================================
    4. RENDER
@@ -485,24 +544,24 @@ function renderTabs() {
     const active = f === state.activeFinish ? "active" : "";
     const c = countCollected(f);
     return `<button class="tab ${active}" data-finish="${f}">${f}
-      <span class="t-count">${c}/${DROIDEX_DATA.length}</span></button>`;
+      <span class="t-count">${c}/${finishTotal(f)}</span></button>`;
   }).join("");
 }
 
 function renderStats() {
-  const total = DROIDEX_DATA.length;
+  // Header count reflects the ACTIVE finish (droids that exist in it + collected).
   const c = countCollected(state.activeFinish);
-  el("countMain").innerHTML = `${c}<small>/${total}</small>`;
+  el("countMain").innerHTML = `${c}<small>/${finishTotal(state.activeFinish)}</small>`;
 
-  const s = countShiny();
-  el("shinyCount").textContent = `${s}/${total}`;
+  el("flawlessCount").textContent = `${countFlawless()}/${countFlawlessTotal()}`;
 
-  // Overall completion: every droid across every finish = the full collection.
-  const totalSlots = total * CONFIG.finishes.length;
-  let filled = 0;
+  // Overall completion counts every collectible card (each droid's own finishes).
+  let totalSlots = 0, filled = 0;
   for (const d of DROIDEX_DATA)
-    for (const fin of CONFIG.finishes)
+    for (const fin of droidFinishes(d)) {
+      totalSlots++;
       if (isCollected(d.id, fin)) filled++;
+    }
   const pct = totalSlots ? Math.round((filled / totalSlots) * 100) : 0;
   el("progressLabel").textContent = "Collection Progress";
   el("progressFill").style.width = pct + "%";
@@ -513,7 +572,7 @@ function currentFilters() {
   return {
     q: el("search").value.trim().toLowerCase(),
     rarity: el("filterRarity").value,
-    role: el("filterRole").value,
+    type: el("filterRole").value,
     status: el("filterStatus").value,
   };
 }
@@ -522,12 +581,13 @@ function renderGrid() {
   const f = currentFilters();
   const finish = state.activeFinish;
   const list = DROIDEX_DATA.filter(d => {
+    if (!droidFinishes(d).includes(finish)) return false; // not collectible in this finish
     if (f.rarity && d.rarity !== f.rarity) return false;
-    if (f.role && d.role !== f.role) return false;
+    if (f.type && d.type !== f.type) return false;
     if (f.status === "collected" && !isCollected(d.id, finish)) return false;
     if (f.status === "missing" && isCollected(d.id, finish)) return false;
     if (f.q) {
-      const hay = `${d.name} ${d.role} ${d.perk} ${d.rarity}`.toLowerCase();
+      const hay = `${d.name} ${d.type} ${d.income} ${d.rarity}`.toLowerCase();
       if (!hay.includes(f.q)) return false;
     }
     return true;
@@ -543,7 +603,7 @@ function renderGrid() {
     return `
       <div class="card ${got ? "collected" : "uncollected"}" data-id="${d.id}" style="--rc:${rc}">
         <div class="badge" data-toggle="${d.id}" title="Mark ${finish} collected">✓</div>
-        ${isShiny(d.id) ? `<div class="shiny-mark" title="Shiny">✨</div>` : ""}
+        ${isFlawless(d.id) ? `<div class="flawless-mark" title="Flawless">✨</div>` : ""}
         <div class="art">${art}</div>
         <div class="name">${d.name}</div>
         <div class="rarity" style="color:${rc}">${d.rarity}</div>
@@ -566,22 +626,24 @@ function openModal(id) {
         <h2>${d.name}</h2>
         <div class="meta-row">
           <span class="chip" style="color:${rarityColor[d.rarity]}">${d.rarity}</span>
-          <span class="chip">🔧 ${d.role}</span>
+          <span class="chip">${typeIcon(d.type)} ${d.type}</span>
+          ${d.eventLocked ? `<span class="chip" style="color:var(--r-iconic)">🔒 Event-locked</span>` : ""}
         </div>
-        <div class="perk">${d.perk}</div>
+        ${d.income ? `<div class="perk">${d.income} base income</div>` : ""}
       </div>
     </div>
 
     <div class="m-section-label">Finishes collected</div>
     <div class="finish-toggles" id="finishToggles">
-      ${CONFIG.finishes.map(fin => `
+      ${droidFinishes(d).map(fin => `
         <button data-finish="${fin}" class="${isCollected(d.id, fin) ? "on" : ""}">${fin}</button>`).join("")}
     </div>
 
-    <div class="shiny-toggle">
-      <button id="shinyBtn" class="${isShiny(d.id) ? "on" : ""}">✨ Shiny</button>
-      <span style="color:var(--muted);font-size:13px">Mark if you have the shiny variant.</span>
-    </div>
+    ${flawlessCapable(d) ? `
+    <div class="flawless-toggle">
+      <button id="flawlessBtn" class="${isFlawless(d.id) ? "on" : ""}">✨ Flawless</button>
+      <span style="color:var(--muted);font-size:13px">Mark if you have the flawless variant.</span>
+    </div>` : ""}
   `;
 
   // wire up modal buttons
@@ -592,7 +654,8 @@ function openModal(id) {
       renderAll();
     };
   });
-  el("shinyBtn").onclick = (e) => { toggleShiny(d.id); e.currentTarget.classList.toggle("on"); renderStats(); renderGrid(); };
+  const fb = el("flawlessBtn");
+  if (fb) fb.onclick = (e) => { toggleFlawless(d.id); e.currentTarget.classList.toggle("on"); renderStats(); renderGrid(); };
   el("modal").querySelector("[data-close]").onclick = closeModal;
 
   el("overlay").classList.add("open");
@@ -636,7 +699,7 @@ document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeModal
 // Export
 el("btnExport").onclick = () => {
   const payload = { app: "droidtycoons-droidex", version: 1, exportedFinish: state.activeFinish,
-                    collected: state.collected, shiny: state.shiny };
+                    collected: state.collected, flawless: state.flawless };
   const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
@@ -657,7 +720,7 @@ el("importFile").onchange = (e) => {
       const data = JSON.parse(reader.result);
       if (!data.collected) throw new Error("Not a Droidex export");
       state.collected = data.collected || {};
-      state.shiny = data.shiny || {};
+      state.flawless = data.flawless || {};
       saveState();
       renderAll();
       toast("Collection imported ⬆");
@@ -692,9 +755,9 @@ function toast(msg) {
 function populateFilters() {
   el("filterRarity").insertAdjacentHTML("beforeend",
     CONFIG.rarities.map(r => `<option value="${r.name}">${r.name}</option>`).join(""));
-  const roles = [...new Set(DROIDEX_DATA.map(d => d.role))].sort();
+  const types = [...new Set(DROIDEX_DATA.map(d => d.type))].sort();
   el("filterRole").insertAdjacentHTML("beforeend",
-    roles.map(r => `<option value="${r}">${r}</option>`).join(""));
+    types.map(t => `<option value="${t}">${t}</option>`).join(""));
 }
 
 populateFilters();

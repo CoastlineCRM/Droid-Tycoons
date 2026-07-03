@@ -47,21 +47,26 @@ Every push to `main` afterward updates the live site automatically.
 ## Editing the droid catalog
 
 All droid data lives in one place: the `DROIDEX_DATA` array inside `index.html` (near the top of
-the `<script>`). The included ~10 entries are **samples** to get you started (PIT uses its real
-in-game values). Add the rest by copying an entry:
+the `<script>`). It's seeded with the **54 real droids** (51 collectible in all 5 finishes, plus 3
+event-locked Iconic droids that are Default-finish only). Add or edit an entry like this:
 
 ```js
-{ id: "pit", name: "PIT", rarity: "Common", role: "Worker", perk: "10% Droid Crafting Speed", image: "" },
+{ id: "pit", name: "PIT", rarity: "Common", type: "Worker", income: "2/s" },
+// event-locked example (only exists in the Default finish, can't be Flawless):
+{ id: "bb8", name: "BB8", rarity: "Iconic", type: "Astromech", income: "5%/s", finishes: ["Default"], eventLocked: true },
 ```
 
 - `id` — unique, lowercase, no spaces (used to save collection state — don't reuse).
-- `rarity` — one of: `Common`, `Rare`, `Epic`, `Legendary`, `Mythic`.
-- `role` — free text (e.g. `Worker`, `Combat`, `Gatherer`, `Support`). Roles appear in the filter automatically.
-- `perk` — the droid's bonus text.
-- `image` — a URL to art, or `""` for the placeholder icon.
+- `rarity` — one of: `Common`, `Rare`, `Epic`, `Legendary`, `Mythic`, `Iconic`.
+- `type` — `Worker`, `Astromech`, or `Battle`. Types appear in the filter automatically.
+- `income` — the Default-tier credits/sec (shown in the detail popup).
+- `finishes` *(optional)* — array of finishes the droid can appear in. Omit for all five;
+  set to `["Default"]` for event-locked droids.
+- `eventLocked` *(optional)* — `true` marks it Iconic/event-only and excludes it from Flawless.
 
-The `CONFIG` block just above `DROIDEX_DATA` controls finishes, rarity colors, milestones, and the
-shiny multiplier — edit those to match the game as it evolves.
+Data sourced from the community Droidex dataset
+([github.com/erikpeik/droidex](https://github.com/erikpeik/droidex)) plus the in-game Droidex.
+The `CONFIG` block just above `DROIDEX_DATA` controls the finishes and rarity colors.
 
 ---
 
