@@ -108,7 +108,8 @@
     .galaxy, .stars, .stars::before, .stars::after { animation: none !important; }
   }
 
-  .wrap { max-width: 1280px; margin: 0 auto; padding: 20px clamp(12px, 3vw, 28px) 90px; position: relative; z-index: 1; }
+  .wrap { max-width: 1280px; margin: 0 auto; padding: 20px clamp(12px, 3vw, 28px) 40px; position: relative; z-index: 1;
+          display: flex; flex-direction: column; min-height: 100vh; }
 
   /* ---------- Header ---------- */
   header.top { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; flex-wrap: wrap; margin-bottom: 6px; }
@@ -351,7 +352,7 @@
              font-size: 28px; cursor: pointer; line-height: 1; }
   .m-close:hover { color: #fff; }
 
-  footer { text-align: center; color: var(--muted); font-size: 12px; margin-top: 44px; line-height: 1.8; }
+  footer { text-align: center; color: var(--muted); font-size: 12px; margin-top: auto; padding-top: 44px; line-height: 1.8; }
   .credit {
     background: linear-gradient(92deg, var(--cyan), var(--purple) 50%, var(--pink));
     -webkit-background-clip: text; background-clip: text; color: transparent;
