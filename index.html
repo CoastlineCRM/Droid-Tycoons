@@ -212,6 +212,8 @@
   .controls select:focus { outline: none; border-color: var(--cyan); box-shadow: 0 0 16px rgba(79,227,255,.35); }
   .controls select.filter-on { border-color: var(--accent); color: #fff; box-shadow: 0 0 12px rgba(255,138,61,.35); }
   .controls.hide-filters .droidex-only { display: none; }  /* rarity/type/status only on Droidex */
+  .controls .cycle-only { display: none; }                 /* All/Needed only on cycle pages */
+  .controls.hide-filters .cycle-only { display: inline-block; }
   button.btn {
     background: var(--panel); border: 1px solid var(--glass-br); color: var(--text);
     border-radius: 8px; padding: 7px 12px; font-size: 12px; font-weight: 700;
@@ -472,6 +474,10 @@
       <option value="">All</option>
       <option value="collected">Collected</option>
       <option value="missing">Missing</option>
+    </select>
+    <select id="cycleFilter" class="cycle-only" title="Show all or only droids you still need">
+      <option value="all">All</option>
+      <option value="needed">Needed</option>
     </select>
     <button class="btn gear" id="btnSettings" title="Settings" aria-label="Settings">⚙</button>
   </div>
@@ -920,6 +926,7 @@ function onGlobalSearch() {
 }
 el("search").addEventListener("input", onGlobalSearch);
 ["filterRarity", "filterRole", "filterStatus"].forEach(id => el(id).addEventListener("input", renderGrid));
+el("cycleFilter").addEventListener("change", () => { if (activePage.startsWith("cycle")) renderCycleList(activePage.replace("cycle", "")); });
 el("searchClear").onclick = () => { el("search").value = ""; onGlobalSearch(); el("search").focus(); };
 
 // Overlays: click outside modal / gear popup, or Esc, closes
@@ -968,10 +975,13 @@ el("importFile").onchange = (e) => {
 
 // Reset
 el("btnReset").onclick = () => {
-  if (!confirm("Clear ALL your collection marks? This cannot be undone (export first to keep a backup).")) return;
+  if (!confirm("Clear ALL your collection marks (Droidex + all cycle credits)? This cannot be undone (export first to keep a backup).")) return;
   state = defaultState();
   saveState();
+  cycleCollected.clear();
+  saveCycleState();
   renderAll();
+  if (activePage && activePage.startsWith("cycle")) renderCycleList(activePage.replace("cycle", ""));
   closeSettings();
   toast("Collection cleared");
 };
@@ -1086,8 +1096,8 @@ let cycleCollected = (function () {
   try { const raw = localStorage.getItem(CYCLE_STORAGE); if (raw) return new Set(JSON.parse(raw).collected || []); } catch (e) {}
   return new Set();
 })();
-const cycleCollapsed = new Set();
-const cycNeeded = {};
+const cycExpanded = new Set();  // completed sections the user chose to re-open
+const cycCollapsed = new Set();  // incomplete sections the user chose to collapse
 const cycleShellBuilt = {};
 let activePage = "droidex";
 
@@ -1106,6 +1116,12 @@ const TIER_TO_FINISH = { Base: "Default" }; // Gold/Diamond/Rainbow/Beskar map t
 function cycleDroidId(name) { const n = _norm(name); return CYCLE_ALIAS[n] || DROIDEX_BY_NORM[n] || null; }
 function cycleDroidFinish(tier) { return TIER_TO_FINISH[tier] || tier; }
 function cycleDroidGot(d) { const id = cycleDroidId(d.name); return id ? isCollected(id, cycleDroidFinish(d.tier)) : false; }
+function rebirthAllDone(cy, r) { return cycleCollected.has(cycleCreditsKey(cy, r.level)) && r.droids.every(d => cycleDroidGot(d)); }
+// Completed sections collapse by default (unless re-opened); incomplete ones expand (unless collapsed).
+function isRebirthCollapsed(cy, level, allDone) {
+  const k = `${cy}|${level}`;
+  return allDone ? !cycExpanded.has(k) : cycCollapsed.has(k);
+}
 
 function buildCycleShell(cy) {
   el(`page-cycle${cy}`).innerHTML = `
@@ -1113,22 +1129,7 @@ function buildCycleShell(cy) {
       <div class="cycle-title">Cycle ${cy} · <span class="accent">Super Rebirth</span></div>
       <div class="cycle-sub">Droids required at each rebirth — tap to mark collected.</div>
     </div>
-    <div class="controls">
-      <button class="btn" id="cycNeeded${cy}">Needed only</button>
-      <button class="btn danger" id="cycReset${cy}">Reset</button>
-    </div>
     <div id="cycList${cy}"></div>`;
-
-  el(`cycNeeded${cy}`).addEventListener("click", (e) => {
-    cycNeeded[cy] = !cycNeeded[cy];
-    e.currentTarget.classList.toggle("active", cycNeeded[cy]);
-    renderCycleList(cy);
-  });
-  el(`cycReset${cy}`).addEventListener("click", () => {
-    if (!confirm(`Reset all Cycle ${cy} progress?`)) return;
-    for (const k of [...cycleCollected]) if (k.startsWith(`c${cy}|`)) cycleCollected.delete(k);
-    saveCycleState(); renderCycleList(cy);
-  });
   el(`cycList${cy}`).addEventListener("click", (e) => onCycleListClick(cy, e));
   cycleShellBuilt[cy] = true;
 }
@@ -1137,7 +1138,8 @@ function renderCycleList(cy) {
   const data = CYCLES[cy];
   const listEl = el(`cycList${cy}`);
   const q = (el("search").value || "").trim().toLowerCase();
-  const needed = !!cycNeeded[cy];
+  const needed = el("cycleFilter").value === "needed";
+  el("cycleFilter").classList.toggle("filter-on", needed);
 
   let total = 0, done = 0;
   for (const r of data.rebirths) {
@@ -1170,7 +1172,8 @@ function renderCycleList(cy) {
     const droidsDone = r.droids.filter(d => cycleDroidGot(d)).length;
     const itemsDone = droidsDone + (creditsDone ? 1 : 0);
     const itemsTotal = r.droids.length + 1;
-    const collapsed = cycleCollapsed.has(`${cy}|${r.level}`);
+    const allDone = itemsDone === itemsTotal;
+    const collapsed = isRebirthCollapsed(cy, r.level, allDone);
 
     const creditsRow = creditsVisible ? `<div class="rb-droid rb-credit${creditsDone ? " got" : ""}" data-action="credits" data-level="${r.level}">
             <span class="ck">✓</span>
@@ -1178,7 +1181,7 @@ function renderCycleList(cy) {
             <span class="rb-tier t-gold">CREDITS</span>
           </div>` : "";
 
-    html += `<div class="rb-card${itemsDone === itemsTotal ? " done" : ""}${collapsed ? " collapsed" : ""}">
+    html += `<div class="rb-card${allDone ? " done" : ""}${collapsed ? " collapsed" : ""}">
       <div class="rb-head" data-action="collapse" data-level="${r.level}">
         <span class="rb-badge">REBIRTH ${r.level}</span>
         <span class="rb-count">${itemsDone}/${itemsTotal}</span>
@@ -1220,8 +1223,15 @@ function onCycleListClick(cy, e) {
     }
     renderCycleList(cy);
   } else if (action === "collapse") {
-    const lk = `${cy}|${t.dataset.level}`;
-    if (cycleCollapsed.has(lk)) cycleCollapsed.delete(lk); else cycleCollapsed.add(lk);
+    const level = parseInt(t.dataset.level);
+    const r = CYCLES[cy].rebirths.find(x => x.level === level);
+    const allDone = rebirthAllDone(cy, r);
+    const k = `${cy}|${level}`;
+    if (isRebirthCollapsed(cy, level, allDone)) {       // collapsed -> expand
+      if (allDone) cycExpanded.add(k); else cycCollapsed.delete(k);
+    } else {                                            // expanded -> collapse
+      if (allDone) cycExpanded.delete(k); else cycCollapsed.add(k);
+    }
     renderCycleList(cy);
   }
 }
