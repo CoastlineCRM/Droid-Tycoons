@@ -306,6 +306,58 @@
 
   .empty { text-align: center; color: var(--muted); padding: 60px 20px; font-size: 15px; }
 
+  /* ---------- Page navigation ---------- */
+  .page-nav { display: flex; gap: 8px; flex-wrap: wrap; margin: 2px 0 16px; }
+  .nav-btn {
+    padding: 8px 18px; border-radius: 10px; border: 1.5px solid var(--glass-br);
+    background: var(--panel); color: var(--muted); font-weight: 800; font-size: 13px;
+    letter-spacing: .3px; cursor: pointer; transition: .18s; backdrop-filter: blur(8px); font-family: inherit;
+  }
+  .nav-btn:hover { color: #fff; border-color: var(--accent); }
+  .nav-btn.active { color: #fff; border-color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 22%, var(--panel));
+    box-shadow: 0 0 18px color-mix(in srgb, var(--accent) 45%, transparent); }
+  .page[hidden] { display: none; }
+  button.btn.active { border-color: var(--accent); color: #fff; background: color-mix(in srgb, var(--accent) 20%, var(--panel)); }
+
+  /* ---------- Cycle (Super Rebirth) pages ---------- */
+  .cycle-head { margin: 2px 0 16px; }
+  .cycle-title { font-size: clamp(20px, 3vw, 26px); font-weight: 900; letter-spacing: .3px; text-transform: uppercase; }
+  .cycle-title .accent { background: linear-gradient(92deg, var(--accent), var(--pink)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .cycle-sub { color: var(--muted); font-size: 13px; margin-top: 4px; }
+  .cyc-progress { margin: 0 0 16px; }
+  .cyc-progress .label { font-size: 12px; font-weight: 800; color: var(--accent-2); margin-bottom: 6px; letter-spacing: .3px; }
+
+  .rb-card { background: var(--panel); border: 1.5px solid var(--glass-br2); border-radius: 12px; margin-bottom: 8px; overflow: hidden; backdrop-filter: blur(9px); transition: opacity .2s; }
+  .rb-card.done { opacity: .5; }
+  .rb-head { display: flex; align-items: center; gap: 10px; padding: 9px 14px; cursor: pointer; background: rgba(255,255,255,.03); transition: background .15s; user-select: none; }
+  .rb-head:hover { background: rgba(255,255,255,.06); }
+  .rb-badge { font-weight: 800; font-size: 11px; letter-spacing: .1em; color: var(--accent-2); background: rgba(255,138,61,.12); border: 1px solid rgba(255,138,61,.4); border-radius: 6px; padding: 3px 8px; white-space: nowrap; }
+  .rb-credits { flex: 1; display: flex; align-items: center; gap: 8px; cursor: pointer; border-radius: 6px; padding: 2px 5px; margin: -2px -5px; transition: background .12s; }
+  .rb-credits:hover { background: rgba(255,255,255,.05); }
+  .rb-credits .txt { font-size: 12.5px; color: var(--muted); font-weight: 600; }
+  .rb-count { font-size: 12px; color: var(--muted); font-weight: 700; white-space: nowrap; }
+  .rb-chev { color: var(--muted); font-size: 11px; transition: transform .2s; }
+  .rb-card.collapsed .rb-chev { transform: rotate(-90deg); }
+  .rb-list { padding: 4px 0; }
+  .rb-card.collapsed .rb-list { display: none; }
+  .rb-droid { display: flex; align-items: center; gap: 11px; padding: 8px 14px; cursor: pointer; transition: background .12s; user-select: none; }
+  .rb-droid:hover { background: rgba(255,255,255,.04); }
+  .rb-droid.got { opacity: .4; }
+  .rb-droid .name { flex: 1; font-size: 14px; font-weight: 600; }
+  .rb-tier { font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: .05em; min-width: 56px; text-align: right; }
+
+  .ck { width: 17px; height: 17px; border: 2px solid var(--glass-br); border-radius: 4px; flex: none; display: grid; place-items: center; font-size: 11px; color: transparent; transition: .12s; }
+  .rb-droid.got .ck { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .rb-credits .ck.on { background: #ffcf4a; border-color: #ffcf4a; color: #111; }
+
+  .t-base    { color: var(--muted); }
+  .t-gold    { color: #ffcf4a; }
+  .t-diamond { color: var(--cyan); text-shadow: 0 0 8px rgba(79,227,255,.4); }
+  .t-beskar  { color: #cfd8ee; font-style: italic; text-shadow: 0 0 6px rgba(207,216,238,.4); }
+  .t-rainbow { background: linear-gradient(90deg,#ff5e5e,#ffcf4a,#62e57a,#4fc3ff,#b58bff,#ff5ec4); background-size: 200%;
+               -webkit-background-clip: text; background-clip: text; color: transparent; animation: rainbowShift 3s linear infinite; font-weight: 900; }
+
   /* ---------- Modal ---------- */
   .overlay {
     position: fixed; inset: 0; background: rgba(6,8,26,.72); backdrop-filter: blur(5px);
@@ -389,36 +441,52 @@
       </div>
     </div>
 
-    <div class="progress">
+    <div class="progress" id="progressHeader">
       <div class="label" id="progressLabel">—</div>
       <div class="bar"><i id="progressFill"></i><span id="progressText"></span></div>
       <span class="flawless-line"><svg viewBox="0 0 24 24" class="star-ico"><path d="M10 1.5c.5 4.6 1.4 5.5 6 6-4.6.5-5.5 1.4-6 6-.5-4.6-1.4-5.5-6-6 4.6-.5 5.5-1.4 6-6z"/><path d="M18 12c.3 2.6.8 3.1 3.4 3.4-2.6.3-3.1.8-3.4 3.4-.3-2.6-.8-3.1-3.4-3.4 2.6-.3 3.1-.8 3.4-3.4z"/></svg> Flawless <b id="flawlessCount">0/0</b></span>
     </div>
   </header>
 
-  <!-- Controls: search grows to fill; filters + settings share the row -->
-  <div class="controls">
-    <div class="search-field">
-      <svg class="search-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 2a8 8 0 1 0 4.9 14.32l5.4 5.38 1.4-1.42-5.38-5.39A8 8 0 0 0 10 2zm0 2a6 6 0 1 1 0 12 6 6 0 0 1 0-12z"/></svg>
-      <input type="search" id="search" placeholder="Search droids" autocomplete="off">
-      <button class="search-clear" id="searchClear" aria-label="Clear search" hidden>×</button>
+  <!-- Page navigation -->
+  <nav class="page-nav" id="pageNav">
+    <button class="nav-btn active" data-page="droidex">Droidex</button>
+    <button class="nav-btn" data-page="cycle1">Cycle 1</button>
+    <button class="nav-btn" data-page="cycle2">Cycle 2</button>
+    <button class="nav-btn" data-page="cycle3">Cycle 3</button>
+  </nav>
+
+  <!-- ============ DROIDEX PAGE ============ -->
+  <div id="page-droidex" class="page">
+    <!-- Controls: search grows to fill; filters + settings share the row -->
+    <div class="controls">
+      <div class="search-field">
+        <svg class="search-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 2a8 8 0 1 0 4.9 14.32l5.4 5.38 1.4-1.42-5.38-5.39A8 8 0 0 0 10 2zm0 2a6 6 0 1 1 0 12 6 6 0 0 1 0-12z"/></svg>
+        <input type="search" id="search" placeholder="Search droids" autocomplete="off">
+        <button class="search-clear" id="searchClear" aria-label="Clear search" hidden>×</button>
+      </div>
+      <select id="filterRarity"><option value="">All rarities</option></select>
+      <select id="filterRole"><option value="">All types</option></select>
+      <select id="filterStatus">
+        <option value="">All</option>
+        <option value="collected">Collected</option>
+        <option value="missing">Missing</option>
+      </select>
+      <button class="btn gear" id="btnSettings" title="Settings" aria-label="Settings">⚙</button>
     </div>
-    <select id="filterRarity"><option value="">All rarities</option></select>
-    <select id="filterRole"><option value="">All types</option></select>
-    <select id="filterStatus">
-      <option value="">All</option>
-      <option value="collected">Collected</option>
-      <option value="missing">Missing</option>
-    </select>
-    <button class="btn gear" id="btnSettings" title="Settings" aria-label="Settings">⚙</button>
+
+    <!-- Finish tabs (hidden while searching) -->
+    <div class="tabs" id="tabs"></div>
+
+    <!-- Grid -->
+    <div class="grid" id="grid"></div>
+    <div class="empty" id="empty" hidden>No droids match your filters.</div>
   </div>
 
-  <!-- Finish tabs (hidden while searching) -->
-  <div class="tabs" id="tabs"></div>
-
-  <!-- Grid -->
-  <div class="grid" id="grid"></div>
-  <div class="empty" id="empty" hidden>No droids match your filters.</div>
+  <!-- ============ CYCLE PAGES (built by JS) ============ -->
+  <div id="page-cycle1" class="page" hidden></div>
+  <div id="page-cycle2" class="page" hidden></div>
+  <div id="page-cycle3" class="page" hidden></div>
 
   <footer>
     Droidex Tracker · a fan-made companion for <b>Droid Tycoons</b>.<br>
@@ -911,6 +979,219 @@ function populateFilters() {
 
 populateFilters();
 renderAll();
+
+/* ============================================================
+   7. CYCLES — Super Rebirth trackers.
+   Data transcribed from the user's Cycle 2 / Cycle 3 charts.
+   Tier = the finish required (Base = Default). Cycle 1 TBD.
+   ============================================================ */
+const CYCLES = {
+  1: { rebirths: [] },
+  2: { rebirths: [
+    { level:1,  credits:"10,000",       droids:[{name:"ID-10",tier:"Base"},{name:"MOUSE",tier:"Base"},{name:"GONK",tier:"Base"}] },
+    { level:2,  credits:"150,000",      droids:[{name:"ROLL-R",tier:"Base"},{name:"Senate Hovercam",tier:"Base"},{name:"NAV-EX",tier:"Base"}] },
+    { level:3,  credits:"975,000",      droids:[{name:"R4",tier:"Base"},{name:"VECT-ARM",tier:"Base"},{name:"BDX Explorer",tier:"Gold"}] },
+    { level:4,  credits:"2.95 Million", droids:[{name:"2BB",tier:"Gold"},{name:"Bal-Core",tier:"Gold"},{name:"Orb-Walker",tier:"Base"}] },
+    { level:5,  credits:"5.35 Million", droids:[{name:"R4",tier:"Gold"},{name:"VECT-ARM",tier:"Gold"},{name:"NAV-EX",tier:"Gold"}] },
+    { level:6,  credits:"9.85 Million", droids:[{name:"Gunrunner",tier:"Base"},{name:"2BB",tier:"Diamond"},{name:"Bal-Core",tier:"Diamond"}] },
+    { level:7,  credits:"14.5 Million", droids:[{name:"ROLL-R",tier:"Diamond"},{name:"BDX Explorer",tier:"Diamond"},{name:"R2",tier:"Gold"}] },
+    { level:8,  credits:"36 Million",   droids:[{name:"R4",tier:"Diamond"},{name:"B2 Super",tier:"Gold"},{name:"Gunrunner",tier:"Gold"}] },
+    { level:9,  credits:"89 Million",   droids:[{name:"NAV-EX",tier:"Rainbow"},{name:"Strike-Orb",tier:"Gold"},{name:"Amp Walker",tier:"Gold"}] },
+    { level:10, credits:"220 Million",  droids:[{name:"VECT-ARM",tier:"Rainbow"},{name:"B2 Super",tier:"Diamond"},{name:"R2",tier:"Diamond"}] },
+    { level:11, credits:"550 Million",  droids:[{name:"Strike-Orb",tier:"Diamond"},{name:"B2 Heavy",tier:"Diamond"},{name:"Bal-Core",tier:"Rainbow"}] },
+    { level:12, credits:"1.36 Billion", droids:[{name:"Orb-Walker",tier:"Rainbow"},{name:"R2",tier:"Rainbow"},{name:"BB9",tier:"Base"}] },
+    { level:13, credits:"3.40 Billion", droids:[{name:"B2 Super",tier:"Rainbow"},{name:"Mecha-Droid",tier:"Base"},{name:"Proto-Roller",tier:"Base"}] },
+    { level:14, credits:"8.45 Billion", droids:[{name:"R7",tier:"Gold"},{name:"B2-RP",tier:"Base"},{name:"B2 Heavy",tier:"Rainbow"}] },
+    { level:15, credits:"21 Billion",   droids:[{name:"Strike-Orb",tier:"Rainbow"},{name:"BB9",tier:"Gold"},{name:"Proto-Roller",tier:"Gold"}] },
+    { level:16, credits:"52 Billion",   droids:[{name:"Amp Walker",tier:"Rainbow"},{name:"B2-RP",tier:"Diamond"},{name:"Mecha-Droid",tier:"Gold"}] },
+    { level:17, credits:"130 Billion",  droids:[{name:"Opti-Pod",tier:"Rainbow"},{name:"R7",tier:"Diamond"},{name:"Mono-WLKR",tier:"Gold"}] },
+    { level:18, credits:"325 Billion",  droids:[{name:"Util-Tec",tier:"Rainbow"},{name:"BB9",tier:"Diamond"},{name:"Proto-Roller",tier:"Diamond"}] },
+    { level:19, credits:"810 Billion",  droids:[{name:"Mecha-Droid",tier:"Diamond"},{name:"B2-RP",tier:"Rainbow"},{name:"R7",tier:"Rainbow"}] },
+    { level:20, credits:"2 Trillion",   droids:[{name:"Mono-WLKR",tier:"Rainbow"},{name:"Cyclo-Grav",tier:"Rainbow"},{name:"Opti-STRK",tier:"Rainbow"}] },
+    { level:21, credits:"3 Trillion",   droids:[{name:"R6",tier:"Beskar"},{name:"L0",tier:"Beskar"},{name:"HAUL-R",tier:"Beskar"}] },
+    { level:22, credits:"4.5 Trillion", droids:[{name:"Strike-Orb",tier:"Beskar"},{name:"SEN-TRI",tier:"Beskar"},{name:"Proto-Roller",tier:"Beskar"}] },
+    { level:23, credits:"6 Trillion",   droids:[{name:"BB9",tier:"Beskar"},{name:"Cyclo-Grav",tier:"Beskar"},{name:"B2-RP",tier:"Beskar"}] },
+  ] },
+  3: { rebirths: [
+    { level:1,  credits:"10,000",       droids:[{name:"Mouse",tier:"Base"},{name:"Pit",tier:"Base"},{name:"Gonk",tier:"Base"}] },
+    { level:2,  credits:"150,000",      droids:[{name:"2BB",tier:"Base"},{name:"R3",tier:"Base"},{name:"Senate Hovercam",tier:"Base"}] },
+    { level:3,  credits:"975,000",      droids:[{name:"R4",tier:"Base"},{name:"R5",tier:"Base"},{name:"R8",tier:"Base"}] },
+    { level:4,  credits:"2.95 Million", droids:[{name:"R9",tier:"Gold"},{name:"B1 Battle",tier:"Gold"},{name:"B1 Security",tier:"Gold"}] },
+    { level:5,  credits:"5.35 Million", droids:[{name:"2BB",tier:"Gold"},{name:"R3",tier:"Gold"},{name:"Senate Hovercam",tier:"Gold"}] },
+    { level:6,  credits:"9.85 Million", droids:[{name:"BDX Explorer",tier:"Diamond"},{name:"R4",tier:"Diamond"},{name:"R5",tier:"Diamond"}] },
+    { level:7,  credits:"14.5 Million", droids:[{name:"R8",tier:"Diamond"},{name:"R9",tier:"Diamond"},{name:"B1 Battle",tier:"Diamond"}] },
+    { level:8,  credits:"36 Million",   droids:[{name:"B1 Security",tier:"Rainbow"},{name:"R3",tier:"Rainbow"},{name:"2BB",tier:"Rainbow"}] },
+    { level:9,  credits:"89 Million",   droids:[{name:"BDX Explorer",tier:"Rainbow"},{name:"R4",tier:"Rainbow"},{name:"R5",tier:"Rainbow"}] },
+    { level:10, credits:"220 Million",  droids:[{name:"Trak-R",tier:"Base"},{name:"Groundmech",tier:"Base"},{name:"Senate Hovercam",tier:"Rainbow"}] },
+    { level:11, credits:"550 Million",  droids:[{name:"B2 Heavy",tier:"Base"},{name:"B2 Super",tier:"Base"},{name:"Util-Tec",tier:"Base"}] },
+    { level:12, credits:"1.36 Billion", droids:[{name:"Trak-R",tier:"Gold"},{name:"Groundmech",tier:"Gold"},{name:"Bal-Core",tier:"Rainbow"}] },
+    { level:13, credits:"3.40 Billion", droids:[{name:"B2 Super",tier:"Rainbow"},{name:"Mecha-Droid",tier:"Base"},{name:"Proto-Roller",tier:"Base"}] },
+    { level:14, credits:"8.45 Billion", droids:[{name:"B2 Heavy",tier:"Rainbow"},{name:"B2-RP",tier:"Base"},{name:"R7",tier:"Gold"}] },
+    { level:15, credits:"21 Billion",   droids:[{name:"Strike-Orb",tier:"Rainbow"},{name:"BB9",tier:"Base"},{name:"Proto-Roller",tier:"Gold"}] },
+    { level:16, credits:"52 Billion",   droids:[{name:"Amp Walker",tier:"Rainbow"},{name:"B2-RP",tier:"Gold"},{name:"Mecha-Droid",tier:"Gold"}] },
+    { level:17, credits:"130 Billion",  droids:[{name:"Opti-Pod",tier:"Rainbow"},{name:"R7",tier:"Gold"},{name:"Mono-WLKR",tier:"Gold"}] },
+    { level:18, credits:"325 Billion",  droids:[{name:"Util-Tec",tier:"Gold"},{name:"BB9",tier:"Gold"},{name:"Proto-Roller",tier:"Gold"}] },
+    { level:19, credits:"810 Billion",  droids:[{name:"Mecha-Droid",tier:"Gold"},{name:"R7",tier:"Gold"},{name:"B2-RP",tier:"Gold"}] },
+    { level:20, credits:"2 Trillion",   droids:[{name:"Mono-WLKR",tier:"Rainbow"},{name:"Opti-STRK",tier:"Rainbow"},{name:"Cyclo-Grav",tier:"Rainbow"}] },
+    { level:21, credits:"3 Trillion",   droids:[{name:"L0",tier:"Gold"},{name:"R6",tier:"Gold"},{name:"Haul-R",tier:"Gold"}] },
+    { level:22, credits:"4.5 Trillion", droids:[{name:"Sen-Tri",tier:"Beskar"},{name:"Strike-Orb",tier:"Beskar"},{name:"Proto-Roller",tier:"Beskar"}] },
+    { level:23, credits:"6 Trillion",   droids:[{name:"BB9",tier:"Beskar"},{name:"Cyclo-Grav",tier:"Beskar"},{name:"B2-RP",tier:"Beskar"}] },
+  ] },
+};
+
+const CYCLE_STORAGE = "droidtycoons_cycles_v1";
+let cycleCollected = (function () {
+  try { const raw = localStorage.getItem(CYCLE_STORAGE); if (raw) return new Set(JSON.parse(raw).collected || []); } catch (e) {}
+  return new Set();
+})();
+const cycleCollapsed = new Set();
+const cycNeeded = {};
+const cycleShellBuilt = {};
+let activePage = "droidex";
+
+function saveCycleState() { try { localStorage.setItem(CYCLE_STORAGE, JSON.stringify({ collected: [...cycleCollected] })); } catch (e) {} }
+function cycleKey(cy, lvl, name, tier) { return `c${cy}|${lvl}|${name}|${tier}`; }
+function cycleCreditsKey(cy, lvl) { return `c${cy}|credits|${lvl}`; }
+function tierClass(t) { return "t-" + t.toLowerCase(); }
+function toggleCycleKey(k) { if (cycleCollected.has(k)) cycleCollected.delete(k); else cycleCollected.add(k); saveCycleState(); }
+
+const SEARCH_SVG = `<svg class="search-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 2a8 8 0 1 0 4.9 14.32l5.4 5.38 1.4-1.42-5.38-5.39A8 8 0 0 0 10 2zm0 2a6 6 0 1 1 0 12 6 6 0 0 1 0-12z"/></svg>`;
+
+function buildCycleShell(cy) {
+  el(`page-cycle${cy}`).innerHTML = `
+    <div class="cycle-head">
+      <div class="cycle-title">Cycle ${cy} · <span class="accent">Super Rebirth</span></div>
+      <div class="cycle-sub">Droids required at each rebirth — tap to mark collected.</div>
+    </div>
+    <div class="cyc-progress">
+      <div class="label">Cycle ${cy} Progress</div>
+      <div class="bar"><i id="cycFill${cy}"></i><span id="cycText${cy}"></span></div>
+    </div>
+    <div class="controls">
+      <div class="search-field">${SEARCH_SVG}
+        <input type="search" id="cycSearch${cy}" placeholder="Search droids or a tier" autocomplete="off">
+      </div>
+      <button class="btn" id="cycNeeded${cy}">Needed only</button>
+      <button class="btn danger" id="cycReset${cy}">Reset</button>
+    </div>
+    <div id="cycList${cy}"></div>`;
+
+  el(`cycSearch${cy}`).addEventListener("input", () => renderCycleList(cy));
+  el(`cycNeeded${cy}`).addEventListener("click", (e) => {
+    cycNeeded[cy] = !cycNeeded[cy];
+    e.currentTarget.classList.toggle("active", cycNeeded[cy]);
+    renderCycleList(cy);
+  });
+  el(`cycReset${cy}`).addEventListener("click", () => {
+    if (!confirm(`Reset all Cycle ${cy} progress?`)) return;
+    for (const k of [...cycleCollected]) if (k.startsWith(`c${cy}|`)) cycleCollected.delete(k);
+    saveCycleState(); renderCycleList(cy);
+  });
+  el(`cycList${cy}`).addEventListener("click", (e) => onCycleListClick(cy, e));
+  cycleShellBuilt[cy] = true;
+}
+
+function renderCycleList(cy) {
+  const data = CYCLES[cy];
+  const listEl = el(`cycList${cy}`);
+  const q = (el(`cycSearch${cy}`)?.value || "").trim().toLowerCase();
+  const needed = !!cycNeeded[cy];
+
+  let total = 0, done = 0;
+  for (const r of data.rebirths) {
+    total += r.droids.length + 1;
+    if (cycleCollected.has(cycleCreditsKey(cy, r.level))) done++;
+    for (const d of r.droids) if (cycleCollected.has(cycleKey(cy, r.level, d.name, d.tier))) done++;
+  }
+  const pct = total ? Math.round((done / total) * 100) : 0;
+  el(`cycFill${cy}`).style.width = pct + "%";
+  el(`cycText${cy}`).textContent = total ? `${done} / ${total}` : "—";
+
+  if (!data.rebirths.length) {
+    listEl.innerHTML = `<div class="empty">Cycle ${cy} data coming soon.</div>`;
+    return;
+  }
+
+  let html = "", anyVisible = false;
+  for (const r of data.rebirths) {
+    const visible = r.droids.filter(d => {
+      const k = cycleKey(cy, r.level, d.name, d.tier);
+      const matchQ = !q || d.name.toLowerCase().includes(q) || d.tier.toLowerCase().includes(q);
+      const matchN = !needed || !cycleCollected.has(k);
+      return matchQ && matchN;
+    });
+    if (!visible.length) continue;
+    anyVisible = true;
+
+    const creditsDone = cycleCollected.has(cycleCreditsKey(cy, r.level));
+    const droidsDone = r.droids.filter(d => cycleCollected.has(cycleKey(cy, r.level, d.name, d.tier))).length;
+    const allDone = droidsDone === r.droids.length && creditsDone;
+    const collapsed = cycleCollapsed.has(`${cy}|${r.level}`);
+
+    html += `<div class="rb-card${allDone ? " done" : ""}${collapsed ? " collapsed" : ""}">
+      <div class="rb-head" data-action="collapse" data-level="${r.level}">
+        <span class="rb-badge">REBIRTH ${r.level}</span>
+        <div class="rb-credits" data-action="credits" data-level="${r.level}">
+          <span class="ck${creditsDone ? " on" : ""}">✓</span>
+          <span class="txt">${r.credits} Credits</span>
+        </div>
+        <span class="rb-count">${droidsDone}/${r.droids.length}</span>
+        <span class="rb-chev">▾</span>
+      </div>
+      <div class="rb-list">
+        ${visible.map(d => {
+          const k = cycleKey(cy, r.level, d.name, d.tier);
+          const got = cycleCollected.has(k);
+          return `<div class="rb-droid${got ? " got" : ""}" data-action="droid" data-key="${k}">
+            <span class="ck">✓</span>
+            <span class="name">${d.name}</span>
+            <span class="rb-tier ${tierClass(d.tier)}">${d.tier}</span>
+          </div>`;
+        }).join("")}
+      </div>
+    </div>`;
+  }
+  listEl.innerHTML = anyVisible ? html : `<div class="empty">No droids match — clear the search or filter.</div>`;
+}
+
+function onCycleListClick(cy, e) {
+  const t = e.target.closest("[data-action]");
+  if (!t) return;
+  const action = t.dataset.action;
+  if (action === "credits") {
+    e.stopPropagation();
+    toggleCycleKey(cycleCreditsKey(cy, parseInt(t.dataset.level)));
+    renderCycleList(cy);
+  } else if (action === "droid") {
+    toggleCycleKey(t.dataset.key);
+    renderCycleList(cy);
+  } else if (action === "collapse") {
+    const lk = `${cy}|${t.dataset.level}`;
+    if (cycleCollapsed.has(lk)) cycleCollapsed.delete(lk); else cycleCollapsed.add(lk);
+    renderCycleList(cy);
+  }
+}
+
+function showPage(page) {
+  activePage = page;
+  document.querySelectorAll(".page").forEach(p => { p.hidden = (p.id !== `page-${page}`); });
+  document.querySelectorAll(".nav-btn").forEach(b => b.classList.toggle("active", b.dataset.page === page));
+  el("progressHeader").style.display = (page === "droidex") ? "" : "none";
+  if (page.startsWith("cycle")) {
+    const cy = page.replace("cycle", "");
+    if (!cycleShellBuilt[cy]) buildCycleShell(cy);
+    renderCycleList(cy);
+  }
+  try { localStorage.setItem("droidtycoons_page", page); } catch (e) {}
+}
+
+el("pageNav").addEventListener("click", (e) => {
+  const b = e.target.closest(".nav-btn");
+  if (b) showPage(b.dataset.page);
+});
+
+const savedPage = (() => { try { return localStorage.getItem("droidtycoons_page"); } catch (e) { return null; } })();
+showPage(savedPage && document.getElementById(`page-${savedPage}`) ? savedPage : "droidex");
 </script>
 </body>
 </html>
