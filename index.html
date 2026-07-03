@@ -209,6 +209,7 @@
   }
   .controls select option { background: var(--space-1); color: var(--text); }
   .controls select:focus { outline: none; border-color: var(--cyan); box-shadow: 0 0 16px rgba(79,227,255,.35); }
+  .controls select.filter-on { border-color: var(--accent); color: #fff; box-shadow: 0 0 12px rgba(255,138,61,.35); }
   button.btn {
     background: var(--panel); border: 1px solid var(--glass-br); color: var(--text);
     border-radius: 8px; padding: 7px 12px; font-size: 12px; font-weight: 700;
@@ -745,6 +746,10 @@ function currentFilters() {
 
 function renderGrid() {
   const f = currentFilters();
+  // Highlight dropdowns that have a non-default filter applied.
+  el("filterRarity").classList.toggle("filter-on", !!f.rarity);
+  el("filterRole").classList.toggle("filter-on", !!f.type);
+  el("filterStatus").classList.toggle("filter-on", !!f.status);
   const searchMode = f.q !== "";
   const activeFinish = state.activeFinish;
 
