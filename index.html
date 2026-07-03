@@ -187,17 +187,13 @@
 
   /* ---------- Controls ---------- */
   .controls { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 16px; }
-  .controls input[type=search], .controls select {
+  .controls select {
     background: var(--panel); border: 1px solid var(--glass-br); color: var(--text);
     border-radius: 8px; padding: 7px 10px; font-size: 13px; font-family: inherit;
-    backdrop-filter: blur(8px);
+    backdrop-filter: blur(8px); flex: 0 0 auto;
   }
   .controls select option { background: var(--space-1); color: var(--text); }
-  .controls input[type=search] { flex: 1 1 220px; min-width: 180px; }
-  .controls input[type=search]::placeholder { color: var(--muted); }
-  .controls input[type=search]:focus, .controls select:focus {
-    outline: none; border-color: var(--cyan); box-shadow: 0 0 16px rgba(79,227,255,.35); }
-  .spacer { flex: 1 1 auto; }
+  .controls select:focus { outline: none; border-color: var(--cyan); box-shadow: 0 0 16px rgba(79,227,255,.35); }
   button.btn {
     background: var(--panel); border: 1px solid var(--glass-br); color: var(--text);
     border-radius: 8px; padding: 7px 12px; font-size: 12px; font-weight: 700;
@@ -214,18 +210,18 @@
   .settings-actions .btn { width: 100%; text-align: center; padding: 12px 14px; font-size: 14px; }
   .settings-note { color: var(--muted); font-size: 12px; margin-top: 16px; line-height: 1.6; }
 
-  /* Search-first primary bar */
-  .search-wrap { position: relative; margin-bottom: 12px; }
-  .search-wrap .search-ico { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); font-size: 18px; opacity: .7; pointer-events: none; }
-  .search-wrap input {
-    width: 100%; background: var(--panel); border: 1.5px solid var(--glass-br); color: var(--text);
-    border-radius: 14px; padding: 14px 44px 14px 46px; font-size: 16px; font-family: inherit; backdrop-filter: blur(8px);
+  /* Search field — grows to fill the controls row, same height as the rest */
+  .search-field { position: relative; display: flex; align-items: center; flex: 1 1 200px; min-width: 150px; }
+  .search-field .search-ico { position: absolute; left: 10px; width: 15px; height: 15px; fill: var(--muted); pointer-events: none; }
+  .search-field input {
+    width: 100%; background: var(--panel); border: 1px solid var(--glass-br); color: var(--text);
+    border-radius: 8px; padding: 7px 28px 7px 31px; font-size: 13px; font-family: inherit; backdrop-filter: blur(8px);
   }
-  .search-wrap input::placeholder { color: var(--muted); }
-  .search-wrap input:focus { outline: none; border-color: var(--cyan); box-shadow: 0 0 22px rgba(79,227,255,.35); }
+  .search-field input::placeholder { color: var(--muted); }
+  .search-field input:focus { outline: none; border-color: var(--cyan); box-shadow: 0 0 16px rgba(79,227,255,.35); }
   .search-clear {
-    position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
-    background: none; border: none; color: var(--muted); font-size: 22px; cursor: pointer; line-height: 1; padding: 4px 8px;
+    position: absolute; right: 5px; background: none; border: none; color: var(--muted);
+    font-size: 17px; cursor: pointer; line-height: 1; padding: 2px 5px;
   }
   .search-clear:hover { color: #fff; }
   .finish-tag { text-align: center; font-size: 10.5px; font-weight: 800; letter-spacing: .5px; text-transform: uppercase; }
@@ -375,15 +371,13 @@
     </div>
   </header>
 
-  <!-- Search (primary) -->
-  <div class="search-wrap">
-    <span class="search-ico">🔍</span>
-    <input type="search" id="search" placeholder="Search a droid — name, type, or rarity…" autocomplete="off">
-    <button class="search-clear" id="searchClear" aria-label="Clear search" hidden>×</button>
-  </div>
-
-  <!-- Filters + settings -->
+  <!-- Controls: search grows to fill; filters + settings share the row -->
   <div class="controls">
+    <div class="search-field">
+      <svg class="search-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 2a8 8 0 1 0 4.9 14.32l5.4 5.38 1.4-1.42-5.38-5.39A8 8 0 0 0 10 2zm0 2a6 6 0 1 1 0 12 6 6 0 0 1 0-12z"/></svg>
+      <input type="search" id="search" placeholder="Search droids" autocomplete="off">
+      <button class="search-clear" id="searchClear" aria-label="Clear search" hidden>×</button>
+    </div>
     <select id="filterRarity"><option value="">All rarities</option></select>
     <select id="filterRole"><option value="">All types</option></select>
     <select id="filterStatus">
@@ -391,7 +385,6 @@
       <option value="collected">Collected</option>
       <option value="missing">Missing</option>
     </select>
-    <span class="spacer"></span>
     <button class="btn gear" id="btnSettings" title="Settings" aria-label="Settings">⚙</button>
   </div>
 
