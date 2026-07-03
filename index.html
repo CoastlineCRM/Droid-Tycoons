@@ -330,6 +330,7 @@
   .perk { margin: 12px 0; color: var(--accent-2); font-weight: 700; font-size: 15px;
           text-shadow: 0 0 12px rgba(255,138,61,.3); }
   .perk::before { content: "★ "; }
+  .droid-perk { margin: 6px 0 0; color: var(--cyan); font-weight: 700; font-size: 13.5px; }
   .m-section-label { font-size: 12px; text-transform: uppercase; letter-spacing: .6px; color: var(--muted); font-weight: 800; margin: 18px 0 8px; }
   .finish-toggles { display: flex; gap: 8px; flex-wrap: wrap; }
   .finish-toggles button {
@@ -528,14 +529,15 @@ const DROIDEX_DATA = [
   { id: "b2-rp",           name: "B2-RP",             rarity: "Legendary",  type: "Battle",     income: "1.30k/s" },
   { id: "cyclo-grav",      name: "CYCLO-GRAV",        rarity: "Legendary",  type: "Battle",     income: "1.26k/s" },
   { id: "opti-strike",     name: "OPTI-STRIKE",       rarity: "Legendary",  type: "Battle",     income: "1.50k/s" },
-  // MYTHIC — perks community-sourced (games.gg / allthings.how); pending in-game verification.
-  { id: "ric-1200",        name: "RIC-1200",          rarity: "Mythic",     type: "Worker",     perk: "30% Droid Crafting Speed" },
-  { id: "lep",             name: "LEP",               rarity: "Mythic",     type: "Worker",     perk: "30% Droid Crafting Speed" },
-  { id: "loadlifter",      name: "LOADLIFTER",        rarity: "Mythic",     type: "Worker",     perk: "30% Droid Crafting Speed" },
-  { id: "tri-tek",         name: "TRI-TEK",           rarity: "Mythic",     type: "Astromech",  perk: "+5 Pickaxe Level" },
-  { id: "cyclens",         name: "CYCLENS",           rarity: "Mythic",     type: "Astromech",  perk: "+5 Pickaxe Level" },
-  { id: "kx",              name: "KX",                rarity: "Mythic",     type: "Battle",     perk: "+100 Max Health" },
-  { id: "ig",              name: "IG",                rarity: "Mythic",     type: "Battle",     perk: "+100 Max Health" },
+  // MYTHIC — perks/income community-sourced (games.gg / allthings.how / neonlightsmedia); verifying in-game.
+  { id: "snow-mouse",      name: "SNOW MOUSE",        rarity: "Mythic",     type: "Worker",     income: "4.4k/s", perk: "30% Droid Crafting Speed" },
+  { id: "ric-1200",        name: "RIC-1200",          rarity: "Mythic",     type: "Worker",     income: "5.8k/s", perk: "30% Droid Crafting Speed" },
+  { id: "lep",             name: "LEP",               rarity: "Mythic",     type: "Worker",     income: "6.5k/s", perk: "30% Droid Crafting Speed" },
+  { id: "loadlifter",      name: "LOADLIFTER",        rarity: "Mythic",     type: "Worker",     income: "7.2k/s", perk: "30% Droid Crafting Speed" },
+  { id: "tri-tek",         name: "TRI-TEK",           rarity: "Mythic",     type: "Astromech",  income: "6.5k/s", perk: "+5 Pickaxe Level" },
+  { id: "cyclens",         name: "CYCLENS",           rarity: "Mythic",     type: "Astromech",  income: "4.4k/s", perk: "+5 Pickaxe Level" },
+  { id: "kx",              name: "KX",                rarity: "Mythic",     type: "Battle",     income: "7.2k/s", perk: "+100 Max Health" },
+  { id: "ig",              name: "IG",                rarity: "Mythic",     type: "Battle",     income: "5.8k/s", perk: "+100 Max Health" },
   { id: "bb8",             name: "BB8",               rarity: "Iconic",     type: "Astromech",  income: "5%/s", finishes: ["Default"], eventLocked: true },
   { id: "mister-bones",    name: "MISTER BONES",      rarity: "Iconic",     type: "Battle",     income: "5%/s", finishes: ["Default"], eventLocked: true },
   { id: "ig-11-marshal",   name: "IG-11 MARSHAL",     rarity: "Iconic",     type: "Battle",     income: "5%/s", finishes: ["Default"], eventLocked: true },
@@ -741,7 +743,8 @@ function openModal(id) {
           <span class="chip type-chip"><span class="type-icon ${typeClass(d.type)}">${typeSvg(d.type)}</span>${d.type}</span>
           ${d.eventLocked ? `<span class="chip" style="color:var(--r-iconic)">🔒 Event-locked</span>` : ""}
         </div>
-        ${d.income ? `<div class="perk">${d.income} base income</div>` : (d.perk ? `<div class="perk">${d.perk}</div>` : "")}
+        ${d.income ? `<div class="perk">${d.income} base income</div>` : ""}
+        ${d.perk ? `<div class="droid-perk">Perk: ${d.perk}</div>` : ""}
       </div>
     </div>
 
@@ -777,17 +780,23 @@ function closeSettings() { el("settingsOverlay").classList.remove("open"); }
 /* ============================================================
    5. EVENTS
    ============================================================ */
-// Swap any broken droid image for the placeholder icon (some droids lack art).
+// Broken droid image: first fall back to the DEFAULT-finish art (so one image
+// per droid can cover every finish), then to the placeholder icon.
 document.addEventListener("error", (e) => {
   const img = e.target;
-  if (img && img.classList && img.classList.contains("droid-img")) {
-    const parent = img.parentNode;
-    img.remove();
-    if (parent && !parent.querySelector(".ph")) {
-      const ph = document.createElement("span");
-      ph.className = "ph"; ph.textContent = "🤖";
-      parent.appendChild(ph);
-    }
+  if (!(img && img.classList && img.classList.contains("droid-img"))) return;
+  const src = img.getAttribute("src") || "";
+  if (!/_DEFAULT\.png$/i.test(src) && !img.dataset.triedDefault) {
+    img.dataset.triedDefault = "1";
+    img.src = src.replace(/_(GOLD|DIAMOND|RAINBOW|BESKAR)\.png$/i, "_DEFAULT.png");
+    return;
+  }
+  const parent = img.parentNode;
+  img.remove();
+  if (parent && !parent.querySelector(".ph")) {
+    const ph = document.createElement("span");
+    ph.className = "ph"; ph.textContent = "🤖";
+    parent.appendChild(ph);
   }
 }, true);
 
