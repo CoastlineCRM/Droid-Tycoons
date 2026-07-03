@@ -227,11 +227,14 @@
 
   /* Search field — grows to fill the controls row, same height as the rest */
   .search-field { position: relative; display: flex; align-items: center; flex: 1 1 200px; min-width: 150px; }
-  .search-field .search-ico { position: absolute; left: 10px; width: 15px; height: 15px; fill: var(--muted); pointer-events: none; }
+  .search-field .search-ico { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); width: 15px; height: 15px; fill: var(--muted); pointer-events: none; z-index: 2; }
   .search-field input {
     width: 100%; background: var(--panel); border: 1px solid var(--glass-br); color: var(--text);
-    border-radius: 8px; padding: 7px 28px 7px 31px; font-size: 13px; font-family: inherit; backdrop-filter: blur(8px);
+    border-radius: 8px; padding: 7px 28px 7px 33px; font-size: 13px; font-family: inherit; backdrop-filter: blur(8px);
   }
+  /* hide the browser's native search clear (we use our own) */
+  .search-field input::-webkit-search-cancel-button,
+  .search-field input::-webkit-search-decoration { -webkit-appearance: none; appearance: none; }
   .search-field input::placeholder { color: var(--muted); }
   .search-field input:focus { outline: none; border-color: var(--cyan); box-shadow: 0 0 16px rgba(79,227,255,.35); }
   .search-clear {
