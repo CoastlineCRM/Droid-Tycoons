@@ -1490,8 +1490,7 @@ el("addSearch").addEventListener("input", renderAddGrid);
 el("addGrid").addEventListener("click", (e) => {
   const c = e.target.closest("[data-add]"); if (!c) return;
   myDroids.push({ id: c.dataset.add, tier: myAddTier });
-  saveMy(); renderMyDroids();
-  c.classList.add("added"); setTimeout(() => c.classList.remove("added"), 450);
+  saveMy(); renderMyDroids(); closeAddModal();
 });
 el("addClose").addEventListener("click", closeAddModal);
 el("addOverlay").addEventListener("click", (e) => { if (e.target === el("addOverlay")) closeAddModal(); });
