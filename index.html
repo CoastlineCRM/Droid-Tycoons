@@ -985,7 +985,31 @@ renderAll();
    Tier = the finish required (Base = Default). Cycle 1 TBD.
    ============================================================ */
 const CYCLES = {
-  1: { rebirths: [] },
+  1: { rebirths: [
+    { level:1,  credits:"10,000",       droids:[{name:"CB",tier:"Base"},{name:"Pit",tier:"Base"},{name:"DRK-1 Probe",tier:"Base"}] },
+    { level:2,  credits:"150,000",      droids:[{name:"2BB",tier:"Base"},{name:"BDX Explorer",tier:"Base"},{name:"Bal-Core",tier:"Base"}] },
+    { level:3,  credits:"975,000",      droids:[{name:"A-LT",tier:"Base"},{name:"BU-4D",tier:"Base"},{name:"R9",tier:"Base"}] },
+    { level:4,  credits:"2.95 Million", droids:[{name:"ARG",tier:"Gold"},{name:"B1 Security",tier:"Gold"},{name:"Groundmech",tier:"Base"}] },
+    { level:5,  credits:"5.35 Million", droids:[{name:"BU-4D",tier:"Gold"},{name:"HOV-R",tier:"Gold"},{name:"R9",tier:"Diamond"}] },
+    { level:6,  credits:"9.85 Million", droids:[{name:"Groundmech",tier:"Gold"},{name:"ARG",tier:"Diamond"},{name:"A-LT",tier:"Diamond"}] },
+    { level:7,  credits:"14.5 Million", droids:[{name:"BB",tier:"Gold"},{name:"B1 Security",tier:"Diamond"},{name:"BU-4D",tier:"Diamond"}] },
+    { level:8,  credits:"36 Million",   droids:[{name:"Util-Tec",tier:"Gold"},{name:"L0",tier:"Gold"},{name:"HOV-R",tier:"Diamond"}] },
+    { level:9,  credits:"89 Million",   droids:[{name:"Groundmech",tier:"Rainbow"},{name:"R6",tier:"Gold"},{name:"Trak-R",tier:"Gold"}] },
+    { level:10, credits:"220 Million",  droids:[{name:"L0",tier:"Rainbow"},{name:"Haul-R",tier:"Rainbow"},{name:"Strike-Orb",tier:"Gold"}] },
+    { level:11, credits:"550 Million",  droids:[{name:"Amp Walker",tier:"Rainbow"},{name:"B1 Heavy",tier:"Rainbow"},{name:"BB9",tier:"Base"}] },
+    { level:12, credits:"1.36 Billion", droids:[{name:"Proto-Roller",tier:"Gold"},{name:"Mecha-Droid",tier:"Base"},{name:"Mono-WLKR",tier:"Base"}] },
+    { level:13, credits:"3.40 Billion", droids:[{name:"R7",tier:"Base"},{name:"Cyclo-Grav",tier:"Base"},{name:"B2-RP",tier:"Base"}] },
+    { level:14, credits:"8.45 Billion", droids:[{name:"Opti-STRK",tier:"Base"},{name:"Mono-WLKR",tier:"Gold"},{name:"Mecha-Droid",tier:"Gold"}] },
+    { level:15, credits:"21 Billion",   droids:[{name:"R7",tier:"Gold"},{name:"BB9",tier:"Gold"},{name:"B2-RP",tier:"Gold"}] },
+    { level:16, credits:"52 Billion",   droids:[{name:"Opti-STRK",tier:"Gold"},{name:"Mono-WLKR",tier:"Diamond"},{name:"Proto-Roller",tier:"Diamond"}] },
+    { level:17, credits:"130 Billion",  droids:[{name:"B2-RP",tier:"Diamond"},{name:"Cyclo-Grav",tier:"Diamond"},{name:"Mecha-Droid",tier:"Diamond"}] },
+    { level:18, credits:"325 Billion",  droids:[{name:"BB9",tier:"Diamond"},{name:"R7",tier:"Diamond"},{name:"Mono-WLKR",tier:"Rainbow"}] },
+    { level:19, credits:"810 Billion",  droids:[{name:"B2-RP",tier:"Rainbow"},{name:"Cyclo-Grav",tier:"Rainbow"},{name:"Proto-Roller",tier:"Rainbow"}] },
+    { level:20, credits:"2 Trillion",   droids:[{name:"R7",tier:"Rainbow"},{name:"Mecha-Droid",tier:"Rainbow"},{name:"Opti-STRK",tier:"Rainbow"}] },
+    { level:21, credits:"3 Trillion",   droids:[{name:"BB",tier:"Beskar"},{name:"Orb-Walker",tier:"Beskar"},{name:"Groundmech",tier:"Beskar"}] },
+    { level:22, credits:"4.5 Trillion", droids:[{name:"Amp Walker",tier:"Beskar"},{name:"B1 Heavy",tier:"Beskar"},{name:"Proto-Roller",tier:"Beskar"}] },
+    { level:23, credits:"6 Trillion",   droids:[{name:"R7",tier:"Beskar"},{name:"Mono-WLKR",tier:"Beskar"},{name:"Opti-STRK",tier:"Beskar"}] },
+  ] },
   2: { rebirths: [
     { level:1,  credits:"10,000",       droids:[{name:"ID-10",tier:"Base"},{name:"MOUSE",tier:"Base"},{name:"GONK",tier:"Base"}] },
     { level:2,  credits:"150,000",      droids:[{name:"ROLL-R",tier:"Base"},{name:"Senate Hovercam",tier:"Base"},{name:"NAV-EX",tier:"Base"}] },
