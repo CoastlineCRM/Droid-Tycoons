@@ -871,11 +871,11 @@ function renderGrid() {
     for (const d of droids)
       for (const fin of CONFIG.finishes)
         if (droidFinishes(d).includes(fin)) cards.push({ d, finish: fin });
-    // Order by rarity, then finish level (Default -> Beskar), then name.
+    // Order by finish level (Default -> Beskar), then rarity, then name.
     const finIdx = (fin) => CONFIG.finishes.indexOf(fin);
     cards.sort((a, b) =>
-      (rarityRank[a.d.rarity] - rarityRank[b.d.rarity]) ||
       (finIdx(a.finish) - finIdx(b.finish)) ||
+      (rarityRank[a.d.rarity] - rarityRank[b.d.rarity]) ||
       a.d.name.localeCompare(b.d.name));
   } else {
     for (const d of droids)
